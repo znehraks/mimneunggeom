@@ -1,0 +1,22 @@
+{
+  "name": "mimneunggeom-steam",
+  "version": "1.0.0",
+  "description": "밈능검 — 밈 능력 검정시험(비공식) Steam 래퍼",
+  "main": "main.js",
+  "scripts": {
+    "prestart": "mkdir -p app && cp ../../index.html ../../og.png app/ 2>/dev/null || true",
+    "start": "electron .",
+    "predist": "npm run prestart",
+    "dist": "electron-builder --win --mac"
+  },
+  "build": {
+    "appId": "app.mimneunggeom.steam",
+    "productName": "MimNeungGeom",
+    "files": ["main.js", "app/**/*"],
+    "directories": { "output": "dist" }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}

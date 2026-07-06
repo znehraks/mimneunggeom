@@ -1,0 +1,19 @@
+"AppBuild"
+{
+	"AppID" "%APP_ID%"        // Steamworks에서 발급받은 App ID로 치환
+	"Desc" "mimneunggeom v1.0.0"
+	"ContentRoot" "../electron/dist/"
+	"BuildOutput" "./output/"
+	"Depots"
+	{
+		"%DEPOT_ID%"          // 기본값: App ID + 1
+		{
+			"FileMapping"
+			{
+				"LocalPath" "*"
+				"DepotPath" "."
+				"recursive" "1"
+			}
+		}
+	}
+}

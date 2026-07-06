@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>밈능검 — 밈 능력 검정시험(비공식)</title>
+<meta name="description" content="당신의 밈 감각, 몇 급입니까? 매일 12문항, 3분 완성 국민 밈 모의고사. 밈 연령까지 측정해 드립니다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="밈능검 — 밈 능력 검정시험(비공식)">
+<meta property="og:description" content="당신의 밈 감각, 몇 급입니까? 매일 12문항 · 3분 완성 · 밈 연령 측정. 오늘의 문제는 전원 동일 출제.">
+<meta property="og:url" content="https://mimneunggeom.netlify.app/">
+<meta property="og:image" content="https://mimneunggeom.netlify.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f4efe3; --card:#fbf8ee; --ink:#221d13; --sub:#6d6450;
+  --line:#c9bda2; --line-soft:#e3dbc6; --red:#b3261e; --red-soft:#f6e3e1;
+  --ok:#2e7d32; --gold:#8a6d1d;
+  --serif:"Noto Serif KR",'Apple SD Gothic Neo',serif;
+  --sans:"Noto Sans KR",'Apple SD Gothic Neo',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#1b1812; --card:#242018; --ink:#ece4d0; --sub:#a89c82;
+    --line:#4a4232; --line-soft:#37311f; --red:#e0655a; --red-soft:#3a221f;
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--sans);
+  background-image:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.012) 2px 4px);
+  min-height:100dvh; touch-action:manipulation;
+}
+#app{max-width:560px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;min-height:100dvh}
+main{flex:1}
+.screen{display:none}
+.screen.active{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- 공통 ---------- */
+.card{
+  background:var(--card); border:1.5px solid var(--ink); border-radius:6px;
+  box-shadow:0 2px 0 var(--ink); padding:20px; position:relative;
+}
+.btn{
+  display:block;width:100%;padding:15px 16px;margin:10px 0;
+  font-family:var(--sans);font-size:16px;font-weight:700;color:var(--ink);
+  background:var(--card);border:1.5px solid var(--ink);border-radius:6px;
+  box-shadow:0 2.5px 0 var(--ink);cursor:pointer;text-align:center;
+  transition:transform .06s ease, box-shadow .06s ease;
+}
+.btn:active{transform:translateY(2px);box-shadow:0 .5px 0 var(--ink)}
+.btn.primary{background:var(--ink);color:var(--card)}
+.btn.danger{color:var(--red);border-color:var(--red);box-shadow:0 2.5px 0 var(--red)}
+.btn:disabled{opacity:.45;cursor:default}
+.small{font-size:12.5px;color:var(--sub);line-height:1.6}
+.serif{font-family:var(--serif)}
+hr.rule{border:none;border-top:1px dashed var(--line);margin:14px 0}
+
+/* ---------- 홈 ---------- */
+#seal-logo{
+  width:74px;height:74px;border:3px double var(--red);border-radius:50%;
+  color:var(--red);display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:900;font-size:17px;line-height:1.15;
+  text-align:center;margin:6px auto 14px;transform:rotate(-6deg);opacity:.92;
+}
+h1.title{
+  font-family:var(--serif);font-weight:900;font-size:44px;letter-spacing:6px;
+  text-align:center;margin:0;line-height:1.2;
+}
+.subtitle{text-align:center;font-size:14px;color:var(--sub);letter-spacing:2px;margin:6px 0 2px}
+.round-label{
+  text-align:center;font-family:var(--serif);font-weight:600;font-size:15px;margin:10px 0 4px;
+}
+#ticker{
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:8px 0;margin:16px 0;text-align:center;font-size:12.5px;color:var(--sub);
+  min-height:36px;display:flex;align-items:center;justify-content:center;
+}
+.stat-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0 2px}
+.chip{
+  border:1px solid var(--line);border-radius:99px;padding:5px 12px;
+  font-size:12.5px;color:var(--sub);background:var(--card);
+}
+.chip b{color:var(--ink)}
+
+/* ---------- 시험 ---------- */
+#exam-head{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--sub);margin-bottom:8px}
+#exam-head b{color:var(--ink);font-size:15px}
+.era-badge{
+  display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;
+  border:1px solid var(--ink);margin-bottom:10px;letter-spacing:1px;
+}
+.era-0{background:#e8e0f7}.era-1{background:#dcedd8}.era-2{background:#fde3c8}
+@media (prefers-color-scheme: dark){.era-0,.era-1,.era-2{background:transparent}}
+#timerbar-wrap{height:8px;background:var(--line-soft);border-radius:99px;overflow:hidden;margin:2px 0 16px;border:1px solid var(--line)}
+#timerbar{height:100%;width:100%;background:var(--ok);border-radius:99px;transition:background .3s}
+#timerbar.warn{background:#c98a1b}
+#timerbar.crit{background:var(--red)}
+#q-text{font-family:var(--serif);font-weight:600;font-size:21px;line-height:1.45;margin:0 0 18px;min-height:60px;word-break:keep-all}
+.choice{
+  display:flex;align-items:flex-start;gap:10px;text-align:left;font-weight:500;font-size:15.5px;line-height:1.4;word-break:keep-all;
+}
+.choice .no{font-family:var(--serif);font-weight:900;flex:none}
+.choice.correct{background:#e5f2e3;border-color:var(--ok);box-shadow:0 2.5px 0 var(--ok);color:var(--ok)}
+.choice.wrong{background:var(--red-soft);border-color:var(--red);box-shadow:0 2.5px 0 var(--red);color:var(--red)}
+@media (prefers-color-scheme: dark){
+  .choice.correct{background:transparent}.choice.wrong{background:transparent}
+}
+.choice.debug-answer{outline:2px dotted var(--gold);outline-offset:2px}
+#combo{
+  text-align:center;font-size:13px;font-weight:700;color:var(--gold);
+  min-height:20px;margin-top:6px;letter-spacing:1px;
+}
+#feedback-float{
+  position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);
+  font-family:var(--serif);font-weight:900;font-size:52px;pointer-events:none;
+  opacity:0;z-index:50;
+}
+#feedback-float.show{animation:floatup .8s ease forwards}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,-40%) scale(.7)}25%{opacity:1;transform:translate(-50%,-52%) scale(1.05)}100%{opacity:0;transform:translate(-50%,-75%) scale(1)}}
+#lives{font-size:15px;letter-spacing:2px}
+
+/* ---------- 결과 ---------- */
+#result-sheet{padding-top:26px}
+.sheet-head{
+  text-align:center;font-family:var(--serif);letter-spacing:4px;
+  border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:14px;
+}
+.sheet-head .t1{font-size:13px;color:var(--sub);letter-spacing:3px}
+.sheet-head .t2{font-size:26px;font-weight:900;margin-top:2px}
+.grade-zone{text-align:center;padding:16px 0 8px;position:relative}
+#grade-big{
+  font-family:var(--serif);font-weight:900;font-size:88px;line-height:1;
+  letter-spacing:4px;
+}
+#grade-big small{font-size:36px;letter-spacing:0}
+#grade-title{font-family:var(--serif);font-weight:600;font-size:19px;margin-top:8px}
+#grade-quote{font-size:13.5px;color:var(--sub);margin-top:6px;line-height:1.6;word-break:keep-all}
+#stamp{
+  position:absolute;right:2px;top:-4px;width:88px;height:88px;border:3.5px double var(--red);
+  border-radius:50%;color:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:900;font-size:15px;line-height:1.2;transform:rotate(10deg) scale(0);
+  opacity:.88;
+}
+#stamp.on{animation:stampin .45s cubic-bezier(.2,1.6,.4,1) .35s forwards}
+@keyframes stampin{from{transform:rotate(28deg) scale(2.6);opacity:0}to{transform:rotate(10deg) scale(1);opacity:.88}}
+#nsu-mark{
+  position:absolute;left:0;top:34px;color:var(--red);border:2px solid var(--red);border-radius:4px;
+  font-weight:900;font-size:14px;padding:2px 8px;transform:rotate(-12deg);opacity:.85;display:none;
+}
+table.score-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+table.score-table td{border:1px solid var(--line);padding:8px 10px}
+table.score-table td:first-child{width:38%;color:var(--sub);background:rgba(0,0,0,.02);font-size:13px}
+.era-bars{margin:14px 0 4px}
+.era-bar-row{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:12.5px}
+.era-bar-row .lab{flex:none;width:92px;color:var(--sub)}
+.era-bar-row .track{flex:1;height:10px;background:var(--line-soft);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.era-bar-row .fill{height:100%;background:var(--ink);border-radius:99px;width:0;transition:width .8s ease .3s}
+.era-bar-row .pct{flex:none;width:38px;text-align:right;font-weight:700}
+#emoji-grid{text-align:center;font-size:19px;letter-spacing:3px;margin:12px 0 4px;user-select:all}
+#share-preview{
+  background:rgba(0,0,0,.03);border:1px dashed var(--line);border-radius:6px;
+  padding:10px 12px;font-size:12.5px;color:var(--sub);white-space:pre-wrap;line-height:1.6;margin:10px 0;
+  word-break:break-all;
+}
+#name-row{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:13px;color:var(--sub)}
+#name-input{
+  flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);
+  color:var(--ink);font-family:var(--sans);font-size:14px;
+}
+#ad-slot{margin:16px 0;display:none;text-align:center}
+
+/* ---------- 오답노트 ---------- */
+.review-item{border:1px solid var(--line);border-radius:6px;padding:14px;margin:10px 0;background:var(--card)}
+.review-item .rq{font-family:var(--serif);font-weight:600;font-size:15.5px;margin:6px 0 8px;line-height:1.45;word-break:keep-all}
+.review-item .ra{font-size:13.5px;line-height:1.7}
+.review-item .ra .yours-wrong{color:var(--red);text-decoration:line-through}
+.review-item .ra .yours-right{color:var(--ok);font-weight:700}
+.review-item .note{font-size:12.5px;color:var(--sub);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);line-height:1.6;word-break:keep-all}
+.review-item .mark{float:right;font-size:17px}
+
+footer{margin-top:28px;text-align:center;font-size:11.5px;color:var(--sub);line-height:1.8}
+footer a{color:var(--sub)}
+#toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--ink);color:var(--card);padding:11px 20px;border-radius:99px;
+  font-size:13.5px;font-weight:500;transition:transform .3s cubic-bezier(.2,1.2,.4,1);z-index:100;
+  max-width:86vw;text-align:center;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+@media (max-width:380px){
+  h1.title{font-size:36px;letter-spacing:4px}
+  #grade-big{font-size:72px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<main>
+
+  <!-- ============ 홈 ============ -->
+  <section id="scr-home" class="screen active">
+    <div id="seal-logo">밈검<br>정원</div>
+    <div class="subtitle">국가공인 아님 &middot; 제1종 밈 자격검정</div>
+    <h1 class="title">밈 능력<br>검정시험</h1>
+    <div class="round-label" id="round-label">제 1회 정기검정</div>
+    <div class="stat-row">
+      <span class="chip">🔥 연속 응시 <b id="streak-chip">0</b>일</span>
+      <span class="chip">⏱ 12문항 · 약 3분</span>
+      <span class="chip" id="today-chip" style="display:none">오늘 성적 <b id="today-grade"></b></span>
+    </div>
+    <div id="ticker">본 검정은 아무런 공신력이 없습니다.</div>
+    <button class="btn primary" id="btn-start">오늘의 검정 응시하기</button>
+    <button class="btn" id="btn-view-result" style="display:none">성적통지표 다시 보기</button>
+    <button class="btn" id="btn-endless">무한급수 모드 (연습·기록 도전)</button>
+    <p class="small" style="text-align:center;margin-top:14px">
+      오늘의 12문항은 전국 응시자 전원에게 <b>동일하게</b> 출제됩니다.<br>
+      2000년대 · 2010년대 · 2020년대 밈 각 4문항 &middot; 매일 자정(KST) 갱신
+    </p>
+  </section>
+
+  <!-- ============ 시험 ============ -->
+  <section id="scr-exam" class="screen">
+    <div id="exam-head">
+      <span id="exam-mode-label">제 1회 정기검정</span>
+      <span id="lives" style="display:none"></span>
+      <span>문항 <b id="q-no">1</b> / <span id="q-total">12</span></span>
+    </div>
+    <div class="card">
+      <span class="era-badge" id="era-badge">2020년대</span>
+      <div id="timerbar-wrap"><div id="timerbar"></div></div>
+      <p id="q-text"></p>
+      <div id="choices"></div>
+      <div id="combo"></div>
+    </div>
+    <p class="small" style="text-align:center;margin-top:12px">키보드 1~4로도 답할 수 있습니다 · 부정행위(검색)는 양심이 감독합니다</p>
+  </section>
+
+  <!-- ============ 결과 ============ -->
+  <section id="scr-result" class="screen">
+    <div class="card" id="result-sheet">
+      <div class="sheet-head">
+        <div class="t1" id="result-round">제 1회 밈 능력 검정시험</div>
+        <div class="t2">성 적 통 지 표</div>
+      </div>
+      <div class="grade-zone">
+        <div id="nsu-mark">재수생</div>
+        <div id="grade-big">제 <span id="grade-num">-</span> <small>급</small></div>
+        <div id="grade-title">칭호</div>
+        <div id="grade-quote">한줄평</div>
+        <div id="stamp">밈검정원<br>검인</div>
+      </div>
+      <table class="score-table">
+        <tr><td>취득 점수</td><td><b id="r-score">0</b> 점 <span class="small" id="r-score-max"></span></td></tr>
+        <tr><td>측정 밈 연령</td><td><b id="r-age">-</b> <span class="small" id="r-age-band"></span></td></tr>
+        <tr><td>최대 콤보</td><td><b id="r-combo">0</b> 연속 정답</td></tr>
+      </table>
+      <div class="era-bars">
+        <div class="era-bar-row"><span class="lab">고대(2000년대)</span><div class="track"><div class="fill" id="bar-0"></div></div><span class="pct" id="pct-0">0%</span></div>
+        <div class="era-bar-row"><span class="lab">중세(2010년대)</span><div class="track"><div class="fill" id="bar-1"></div></div><span class="pct" id="pct-1">0%</span></div>
+        <div class="era-bar-row"><span class="lab">현대(2020년대)</span><div class="track"><div class="fill" id="bar-2"></div></div><span class="pct" id="pct-2">0%</span></div>
+      </div>
+      <div id="emoji-grid"></div>
+      <hr class="rule">
+      <div id="name-row">
+        <label for="name-input">성적표 성명</label>
+        <input id="name-input" maxlength="10" placeholder="무명의 응시자">
+      </div>
+      <div id="share-preview"></div>
+      <div id="ad-slot"></div>
+    </div>
+    <button class="btn primary" id="btn-share">결과 공유하기 (친구 소환)</button>
+    <button class="btn" id="btn-card">성적통지표 이미지 저장</button>
+    <button class="btn" id="btn-review">오답노트 · 밈 해설 보기</button>
+    <button class="btn" id="btn-retry">재수하기 (재응시)</button>
+    <button class="btn" id="btn-home">처음으로</button>
+  </section>
+
+  <!-- ============ 오답노트 ============ -->
+  <section id="scr-review" class="screen">
+    <div class="sheet-head" style="border-bottom:2px solid var(--ink);margin-bottom:6px;text-align:center;font-family:var(--serif)">
+      <div class="t2" style="font-size:22px;font-weight:900;letter-spacing:4px">오 답 노 트</div>
+      <div class="t1" style="font-size:12px;color:var(--sub);margin:4px 0 10px">틀린 밈은 오늘 밤 단톡방에서 복습하십시오</div>
+    </div>
+    <div id="review-list"></div>
+    <button class="btn" id="btn-review-back">성적통지표로 돌아가기</button>
+  </section>
+
+</main>
+<footer>
+  © 2026 밈검정원(사설 기관 · 비공식) — 본 시험은 어떠한 법적 효력도 없습니다.<br>
+  <a href="https://github.com/znehraks/mimneunggeom/issues" target="_blank" rel="noopener">문제 제보 · 최신 밈 제안</a>
+</footer>
+</div>
+
+<div id="feedback-float"></div>
+<div id="toast"></div>
+<canvas id="card-canvas" width="1080" height="1350" hidden></canvas>
+
+<script>
+"use strict";
+/* =====================================================
+   밈능검 — 밈 능력 검정시험(비공식)
+   단일 파일 · 백엔드 없음 · 날짜 시드로 전원 동일 출제
+   ===================================================== */
+
+const CONFIG = {
+  LAUNCH: "2026-07-06",              // 제1회 검정일 (KST)
+  URL: "https://mimneunggeom.netlify.app",
+  ADS: { enabled: false }            // 광고 승인 후 MONETIZE.md 참고하여 활성화
+};
+
+/* ---------- 문항 데이터 ----------
+   c[0]이 항상 정답 (표시 시 날짜 시드로 섞음)
+   e: 0=2000년대, 1=2010년대, 2=2020년대 / d: 난이도 1~3 / n: 해설 */
+const QUESTIONS = [
+/* ===== 고대: 2000년대 ===== */
+{e:0,d:1,q:"채팅에서 '하이루'에 대한 국룰 응답은?",c:["방가방가","안녕히 계세요","실례합니다","전화 주세요"],n:"하이루(hi)—방가방가(반가워요)는 2000년대 채팅 인사 공식 콤보."},
+{e:0,d:2,q:"'즐'의 올바른 용법은?",c:["상대를 무시하며 대화를 끝낼 때","즐거움을 순수하게 빌어줄 때","식사 전 감사 인사","출석 체크 도장"],n:"'즐~'은 2000년대 최강의 축객령. 정색하면 지는 것."},
+{e:0,d:2,q:"'KIN'의 정체는?",c:["옆으로 눕히면 '즐'","Korea Internet Network","친척(kin)의 순우리말","길드 이름 약자"],n:"KIN을 시계 방향으로 90도 돌리면 '즐'. 조상님들의 워드아트."},
+{e:0,d:1,q:"'OTL'이 표현하는 것은?",c:["무릎 꿇고 좌절한 사람의 모습","Out To Lunch","온라인 팀 리그","외계인 특별 리그"],n:"O=머리, T=팔과 등, L=무릎. 좌절 이모티콘의 시조새."},
+{e:0,d:1,q:"'안습'의 뜻은?",c:["안구에 습기 찬다(눈물 난다)","안전 습관 캠페인","안 씻는 습관","안방 습도 조절"],n:"안구에 습기가 찬다 = 눈물이 난다. 2000년대 대표 유행어."},
+{e:0,d:1,q:"'지못미'의 뜻은?",c:["지켜주지 못해 미안해","지금 못 믿겠어","지하철 못 탄 미련","지도를 못 보는 미어캣"],n:"굴욕 짤 속 연예인에게 바치던 애도의 세 글자."},
+{e:0,d:3,q:"'흠좀무'의 뜻은?",c:["흠 이게 사실이라면 좀 무섭군요","흠집 좀 무마해 줘","흠… 좀 무겁네","흠뻑 젖어 좀 무안함"],n:"괴담 게시판 필수 리액션. 믿거나 말거나의 정중한 표현."},
+{e:0,d:2,q:"'우왕ㅋ굳ㅋ'의 뉘앙스는?",c:["어설프게 신난 감탄(놀림 반 진심 반)","진지한 극찬","분노의 표출","공식 문서 결재 완료"],n:"2000년대 후반 인터넷 감탄사. 진심 30%, 비꼼 70%."},
+{e:0,d:2,q:"싸이월드 '일촌평'이란?",c:["일촌이 미니홈피에 남기는 한 줄 코멘트","친척 촌수 평가서","하루 한 번 촌극 평론","일등 촌장 선발평"],n:"허세와 우정이 공존하던 한 줄 문학의 성지."},
+{e:0,d:2,q:"싸이월드 '파도타기'의 뜻은?",c:["일촌의 일촌 미니홈피로 계속 넘어가며 구경하기","BGM에 맞춰 춤추기","도토리 환불 신청","미니미 수영 강습"],n:"클릭 몇 번이면 아는 사람의 아는 사람 미니홈피에 도착하는 마법."},
+{e:0,d:1,q:"싸이월드 '도토리'의 용도는?",c:["BGM·스킨 등 아이템 구매 화폐","다람쥐 보호 기금","출석 포인트","묵 만들기 재료 거래"],n:"BGM 하나에 도토리 몇 알. 2000년대 감성 경제의 기축통화."},
+{e:0,d:1,q:"'버디버디'는 무엇이었나?",c:["2000년대를 지배한 메신저","편의점 브랜드","콜라 이름","영어 학습지"],n:"아이디 뒤에 하트, 상태명에 시 한 편. 그 시절의 카톡."},
+{e:0,d:3,q:"'뷁'이 표현하는 것은?",c:["알아듣기 힘든 발음을 한 글자로 눌러 쓴 것","백(100)의 옛말","돼지 울음소리 표준 표기","외규장각 도서 이름"],n:"발음을 그대로 눌러 담은 한 글자. 읽는 순간 그 시절로 소환."},
+{e:0,d:1,q:"'솔까말'의 뜻은?",c:["솔직히 까놓고 말해서","솔로는 까칠하게 말한다","솔선수범 까먹지 말자","솔의눈 까서 말아 먹기"],n:"진실의 서문. 이 말 뒤에는 꼭 뼈 때리는 말이 온다."},
+{e:0,d:1,q:"2000년대 채팅에서 '레알'의 뜻은?",c:["진짜(real)","스페인 축구팀 전용 명칭","레몬 알사탕","레이더 알람"],n:"real의 한글 독음. '레알 실화냐'로 후대까지 계승됨."},
+{e:0,d:2,q:"'어솨요'의 뜻은?",c:["어서 와요(채팅 인사)","어깨·쇄골 요가","어묵 사 와요","어쩐지 수상해요"],n:"타자 수를 아끼던 조상님들의 환영 인사."},
+{e:0,d:2,q:"온라인 카페의 '정모'란?",c:["정기 모임(오프라인 만남)","정치 모임","정수기 모델명","정문 앞 모닥불"],n:"닉네임으로만 알던 사람들을 현실에서 만나는 날."},
+{e:0,d:1,q:"'눈팅'의 뜻은?",c:["글은 안 쓰고 보기만 하는 것","눈싸움 미팅","눈물의 채팅","눈썹 스타일링"],n:"댓글 0개, 조회수 1만의 주역들."},
+{e:0,d:1,q:"'강퇴'의 뜻은?",c:["강제 퇴장","강한 퇴근 의지","강릉 퇴사 여행","강아지 퇴치"],n:"방장의 철퇴. 채팅방 권력의 상징."},
+{e:0,d:2,q:"'~하삼'(예: 밥 먹었삼?)은 어떤 말투?",c:["2000년대 채팅 어미 놀이","사극 전용 존댓말","삼행시 전용 어미","세 번 반복하는 말투"],n:"근엄한 듯 귀여운 그 시절 국민 어미."},
+{e:0,d:3,q:"'므흣'의 뉘앙스는?",c:["묘하게 흐뭇한(살짝 음흉한) 미소","격렬한 분노","무릎이 시림","미역국 흡입 소리"],n:"입꼬리가 스멀스멀 올라가는 그 표정."},
+{e:0,d:2,q:"2000년대 인터넷에서 '폐인'이란?",c:["무언가에 빠져 생활이 무너질 만큼 몰두한 사람","폐업한 인테리어 업자","폐지 줍는 로봇","허파가 튼튼한 사람"],n:"'○○ 폐인'—그 시절 커뮤니티의 명예 훈장."},
+{e:0,d:1,q:"게임 인사 '즐겜'의 뜻은?",c:["즐거운 게임 하세요","즉석 겜블","즐비한 게시물","줄 서서 겜방 입장"],n:"매너의 인사이자 패배 직전의 정신승리 주문."},
+{e:0,d:1,q:"'ㄳ'의 뜻은?",c:["감사","각설탕","간식","기습"],n:"자음만 남기고 모두 생략. 효율의 극치."},
+{e:0,d:2,q:"'현피'의 뜻은?",c:["온라인 다툼이 현실 만남으로 번지는 것","현금 피해 신고","현명한 피신","현관 피아노 연주"],n:"현실+PK(플레이어 킬). 절대 하지 맙시다."},
+{e:0,d:3,q:"채팅 끝에 붙던 'ㅋㄷ'의 뜻은?",c:["키득(웃음)","코드 입력","크게 다침","캐릭터 다운"],n:"ㅋㅋ의 사촌. '키득키득'의 준말."},
+
+/* ===== 중세: 2010년대 ===== */
+{e:1,d:1,q:"급식체 '오지다'의 뜻은?",c:["몹시 대단하다(감탄)","오지랖이 넓다","오전에 지각하다","오징어처럼 생기다"],n:"'오지구요 지리구요'로 완성되는 2010년대 감탄 세트."},
+{e:1,d:1,q:"'실화냐'의 용법은?",c:["믿기 힘든 일에 대한 감탄","다큐멘터리 장르 문의","보험 실비 청구","실내화 분실 신고"],n:"'이거 실화냐?' 놀라움의 국민 표준어."},
+{e:1,d:1,q:"'인정? 어 인정'의 기능은?",c:["동의를 강요하며 리듬을 타는 추임새","공식 인증 절차","부동산 계약 용어","군대 점호 구호"],n:"급식체 리듬 게임의 대표 콤보."},
+{e:1,d:1,q:"'~각'(예: 치킨각)의 뜻은?",c:["딱 ~할 타이밍이라는 뜻","각도기가 필요함","각방 예약","각오 완료 선언"],n:"'이거 완전 치킨각' = 치킨 시킬 명분 확보 완료."},
+{e:1,d:1,q:"'갑분싸'의 뜻은?",c:["갑자기 분위기 싸해짐","갑옷 분실 사건","갑부의 분식집 사인회","갑판 분리 사고"],n:"아재개그 직후 필연적으로 찾아오는 상태."},
+{e:1,d:2,q:"'낄끼빠빠'의 뜻은?",c:["낄 때 끼고 빠질 때 빠져라","낄낄대며 빠르게 인사","끼니는 빠짐없이 챙겨라","낄 자리 없으면 빵 사 와라"],n:"사회생활 만렙들의 4자 성어."},
+{e:1,d:1,q:"'답정너'의 뜻은?",c:["답은 정해져 있고 너는 대답만 하면 돼","답장은 정성껏 너그럽게","답안지 정리하는 너","답십리에 정착한 너구리"],n:"'나 살쪘지?'가 대표 기출문제."},
+{e:1,d:1,q:"'소확행'의 뜻은?",c:["소소하지만 확실한 행복","소고기 확보 행사","소문난 확률 행운","소형 확성기 행진"],n:"퇴근길 편의점 맥주 한 캔의 공식 명칭."},
+{e:1,d:1,q:"'욜로(YOLO)'의 뜻은?",c:["인생은 한 번뿐(You Only Live Once)","요란한 로데오","요일별 로또","욜라 로맨틱"],n:"2010년대 소비 철학. 이후 '갓생'에게 왕좌를 내줌."},
+{e:1,d:1,q:"'TMI'의 뜻은?",c:["굳이 안 알려줘도 될 과한 정보","Team Manager Interview","튀김 만두 1인분","특수 미션 임파서블"],n:"Too Much Information. '안 물어봤는데…'와 세트."},
+{e:1,d:1,q:"'JMT'의 뜻은?",c:["존맛탱(엄청 맛있음)","Japan Music Tour","전문 미용 테크닉","정말 맛없는 튀김"],n:"맛집 리뷰 필수 해시태그였던 세 글자."},
+{e:1,d:1,q:"'존버'의 뜻은?",c:["끝까지 버티기","존댓말 버전","존재감 있는 버스","존슨 버거 세트"],n:"코인·주식·인생 전 분야 공용 생존 전략."},
+{e:1,d:2,q:"'가즈아~'가 태어난 판은?",c:["코인·스포츠 응원판","등산 동호회","가스 안전 캠페인","가훈 공모전"],n:"2017~18년 코인 광풍의 함성. 길게 뽑는 게 포인트."},
+{e:1,d:1,q:"'댕댕이'가 만들어진 원리는?",c:["'멍멍이'와 글자 모양이 비슷해서","댕기머리 강아지 품종이라서","'당당한 이등병'의 준말이라서","일본어에서 수입돼서"],n:"야민정음 대표작. 멍→댕, 명→띵."},
+{e:1,d:1,q:"'띵작'의 원형은?",c:["명작","띵동 걸작","땅 짚고 만든 작품","명절 특선 영화"],n:"야민정음 변환기: 명작→띵작, 명곡→띵곡."},
+{e:1,d:3,q:"'괄도네넴띤'의 정체는?",c:["팔도비빔면(실제 한정판까지 출시)","네팔 라면 브랜드","수학 기호 이름","괄호 도네이션 이벤트"],n:"야민정음이 실제 상품 패키지가 된 전설의 사례(2019)."},
+{e:1,d:1,q:"'커여워'의 원형은?",c:["귀여워","커피가 여기 와","크게 여유로워","커튼이 무거워"],n:"귀→커. 야민정음 입문 필수 단어."},
+{e:1,d:1,q:"'인싸'의 뜻은?",c:["무리에 잘 섞여 노는 사람(인사이더)","인쇄소 사장님","인삼 싸움꾼","인도 여행 마니아"],n:"반대말은 아싸. 인싸템·인싸력 등 무한 파생."},
+{e:1,d:2,q:"'세젤예'의 뜻은?",c:["세상에서 제일 예쁨","세 번 젤리 예약","세종대왕 제일 예민","세탁 젤 예찬론"],n:"팬덤 국룰 수식어. 응용형은 세젤귀."},
+{e:1,d:1,q:"'심쿵'의 뜻은?",c:["심장이 쿵 할 만큼 설렘","심각한 쿵푸 실력","심야 쿵쾅 층간소음","심부름 쿠폰"],n:"설렘의 의성어화. 심쿵사·심쿵주의로 파생."},
+{e:1,d:1,q:"'극혐'의 뜻은?",c:["극도로 혐오함","극장 현수막","극한 협곡 체험","극비 혐의 수사"],n:"줄임말 시대의 가장 강력한 거부 의사."},
+{e:1,d:1,q:"'팩폭'의 뜻은?",c:["반박 불가한 사실로 때리기(팩트 폭행)","팩스 폭탄 테러","팩 포장 폭리 고발","제기차기 폭주"],n:"맞으면 아픈데 반박할 수 없다. 시전 시 갑분싸 주의."},
+{e:1,d:2,q:"급식체 예시로 유명한 '버카충'의 뜻은?",c:["버스카드 충전","버섯 카레 충전","버럭 카리스마 충만","버킷리스트 카운트 충격"],n:"어른들이 급식체를 논할 때 1순위로 소환되던 예시."},
+{e:1,d:2,q:"'별다줄'의 뜻은?",c:["별걸 다 줄인다","별이 다섯 줄","별관 다락방 줄자","별미 다과 줄서기"],n:"줄임말 현상 그 자체를 줄여 버린 메타 줄임말."},
+{e:1,d:2,q:"'당황하셨어요?'의 출처는?",c:["보이스피싱 패러디 개그 코너","등산 안전 공익광고","은행 신입사원 교육 영상","내비게이션 안내 음성"],n:"개그콘서트 '황해'(2012)발. 어눌한 말투가 포인트."},
+{e:1,d:2,q:"'만반잘부'의 뜻은?",c:["만나서 반가워 잘 부탁해","만두 반죽 잘 부풀림","만년 반장의 잘난 부심","만화방 잘 있어라 부산아"],n:"신입 환영 인사 4자 압축판."},
+{e:1,d:1,q:"드라마 전개가 '사이다'라는 말의 반대말은?",c:["고구마","콜라","감자탕","보리차"],n:"속이 뻥 뚫리면 사이다, 목이 턱 막히면 고구마."},
+{e:1,d:1,q:"'갑툭튀'의 뜻은?",c:["갑자기 툭 튀어나옴","갑옷 입고 툭 치기","갑질하다 튀어나간 사원","갑상선 특화 튜닝"],n:"공포영화와 바퀴벌레의 공통 스킬."},
+
+/* ===== 현대: 2020년대 ===== */
+{e:2,d:1,q:"'갓생'의 뜻은?",c:["부지런하고 모범적인 삶","갓 태어난 생선","신을 모시는 생활","갓 쓰고 하는 생방송"],n:"God+인생. 미라클모닝·오운완과 한 세트."},
+{e:2,d:1,q:"'킹받네'의 뜻은?",c:["몹시 열받네","왕이 세금을 받네","킹스맨 개봉 소식","경품 당첨 문자"],n:"열받음에 왕관을 씌운 강조형. 응용: 킹받드라슈."},
+{e:2,d:1,q:"'어쩔티비'의 정석 응수는?",c:["저쩔티비","네 알겠습니다","TV 끄겠습니다","환불해 드릴게요"],n:"어쩔티비→저쩔티비→우짤래미… 끝나지 않는 랩배틀."},
+{e:2,d:1,q:"'중꺾마'의 뜻은?",c:["중요한 건 꺾이지 않는 마음","중간에 꺾인 마늘","중형 꺾쇠 마감재","중고로 산 꺾인 마이크"],n:"2022 롤드컵에서 태어나 월드컵 응원 구호가 된 국민 정신."},
+{e:2,d:2,q:"'스불재'의 뜻은?",c:["스스로 불러온 재앙","스타벅스 불매 재개","스승의 불꽃 재능","스피커 불량 재고"],n:"새벽 2시에 정주행을 시작한 자, 아침의 스불재를 맞이하리라."},
+{e:2,d:1,q:"'군싹'의 뜻은?",c:["군침이 싹 도네","군대 짬밥 싹쓸이","군고구마는 싹 다 내 것","군자의 싹수"],n:"맛있는 짤 아래 반사적으로 달리는 세 글자."},
+{e:2,d:1,q:"'무물보'의 뜻은?",c:["무엇이든 물어보세요","무료 물물교환 보관소","무서운 물귀신 보고서","무한 물복숭아 보급"],n:"인스타 스토리 질문받기의 공식 오프닝."},
+{e:2,d:2,q:"방송·팬덤에서 '구취'의 뜻은?",c:["구독 취소","입냄새","구청 취업 설명회","구식 취향"],n:"'구취 박습니다' = 시청자의 최후통첩. 입냄새 아님."},
+{e:2,d:1,q:"'완내스'의 뜻은?",c:["완전 내 스타일","완도 내수면 스포츠","완충 내장 스프링","완벽한 내신 스코어"],n:"취향 저격 확인 도장. 반대말은 완노스."},
+{e:2,d:1,q:"'느좋'의 뜻은?",c:["느낌 좋다","느리게 좋아짐","느타리버섯 좋아함","늦잠이 좋아"],n:"'느좋 카페' = 인스타 감성 보장 인증 마크."},
+{e:2,d:1,q:"'억까'의 뜻은?",c:["억지로 까내리기","억울한 까마귀","억대 카페 창업","억양이 까다로움"],n:"잘해도 욕먹을 때 꺼내는 방어 용어."},
+{e:2,d:2,q:"'알잘딱깔센'의 뜻은?",c:["알아서 잘 딱 깔끔하고 센스 있게","알람 잘 듣고 딱 깨는 센스","알바생 잘 챙기는 딱한 사장","알고 보면 잘생긴 깔끔한 센터"],n:"모두가 원하지만 아무도 정의할 수 없는 업무 지시."},
+{e:2,d:2,q:"'그잡채'의 용법은?",c:["'그 자체'의 밈 버전","당면 요리 주문 용어","그날 잡은 채소","그림 잡지 채널"],n:"'완벽 그잡채'. 자체→잡채 말장난."},
+{e:2,d:1,q:"'너 T야?'가 놀리는 대상은?",c:["공감보다 해결책부터 말하는 사람","티셔츠 도둑","티머니 잔액 부족자","골프 티 수집가"],n:"MBTI 과몰입 시대의 대표 티키타카."},
+{e:2,d:1,q:"'폼 미쳤다'의 뜻은?",c:["기량·상태가 최고조라는 감탄","거품이 넘쳐흐른다","서식 파일이 손상됐다","폼클렌징이 품절됐다"],n:"스포츠 중계발. 사람이든 노래든 최고조면 폼 미침."},
+{e:2,d:1,q:"'오히려 좋아'의 용법은?",c:["악조건을 긍정으로 뒤집는 주문","방향이 오른쪽이라 좋다는 뜻","오이를 싫어한다는 고백","오전보다 오후가 좋다"],n:"비 오면? 오히려 좋아. 정신승리의 정수."},
+{e:2,d:2,q:"'추구미'의 뜻은?",c:["내가 지향하는 스타일·이미지","추운 구미 지역 특산물","추가 구매 미션","추리 소설 구단의 미스터리"],n:"추구+美. '내 추구미랑 정반대야'처럼 사용."},
+{e:2,d:1,q:"'럭키비키'의 용법은?",c:["뭐든 운 좋게 해석하는 초긍정 마인드","복권 브랜드 이름","행운의 비키니 대회","럭비 키트 브랜드"],n:"'완전 럭키비키잖아~' 초긍정 사고의 시그니처(2024)."},
+{e:2,d:2,q:"'원영적 사고'란?",c:["부정적 상황도 '완전 럭키'로 재해석하는 사고방식","원형 영역에서만 하는 사고 실험","원어민식 영어 사고력","원예 농장 사고 예방 수칙"],n:"물이 반이나 남았네? 마침 목말랐는데, 완전 럭키비키잖아!"},
+{e:2,d:2,q:"'슬릭백'은 무엇인가?",c:["공중에 떠서 미끄러지듯 걷는 스텝 챌린지","머리를 뒤로 넘기는 왁스 이름","'몰래 환불'을 뜻하는 은어","백슬래시 키의 별명"],n:"숏폼을 평정한 그 부유 걷기(2023)."},
+{e:2,d:1,q:"'마라탕후루'가 상징하는 것은?",c:["10대 유행 소비 코스(마라탕 먹고 탕후루)","마라톤 후 회복 루틴","마라도 특산 과일","중국 호텔 체인"],n:"맵고 달게, 용돈은 순삭. 10대 유행의 대명사(2023~24)."},
+{e:2,d:1,q:"'점메추'의 뜻은?",c:["점심 메뉴 추천","점심시간 메모 추가","점포 메인 추석 세일","점자 메뉴판 추진 운동"],n:"직장인 단톡방 오전 11시 국민 질문."},
+{e:2,d:1,q:"'오운완'의 뜻은?",c:["오늘 운동 완료","오전 운행 완료","오이 운반 완판","오랜 운명의 완성"],n:"헬스장 거울샷과 함께하는 갓생 인증 해시태그."},
+{e:2,d:2,q:"'도파민 디톡스'란?",c:["숏폼 등 자극을 끊고 뇌를 쉬게 하는 것","도넛과 파이를 민트에 찍어 먹기","도장 파주는 미니 서비스","신종 다이어트 보조제"],n:"숏폼 과다 시대의 셀프 처방. 실천율은 미지수."},
+{e:2,d:1,q:"'뇌절'의 뜻은?",c:["같은 걸 과하게 반복해 질리게 만드는 것","뇌가 절에 들어감","'뇌섹남'의 준말","전기 회로 차단 용어"],n:"1절만 해. 2절, 3절, 큰절까지 가지 말고."},
+{e:2,d:1,q:"'현타'의 뜻은?",c:["현실 자각 타임","현금 타격감","현관 타일 시공","현지 태풍 경보"],n:"새벽 3시 배달앱 결제 직후 찾아오는 그것."},
+{e:2,d:2,q:"'레게노'의 뜻은?",c:["'레전드'의 밈 표기","레게 음악의 노장","레몬 게 노른자 요리","헤어 왁스 제품명"],n:"legend를 재치 있게 잘못 읽은 데서 출발해 감탄사로 정착."},
+{e:2,d:2,q:"'갓기'의 뜻은?",c:["갓+아기(어리지만 완벽한 존재)","갓 구운 기와","삿갓 만드는 기술자","갓김치 기획전"],n:"팬덤에서 최애가 어리고 완벽할 때 바치는 칭호."}
+];
+
+const ERA_NAMES = ["고대(2000년대)","중세(2010년대)","현대(2020년대)"];
+const ERA_SHORT = ["2000년대","2010년대","2020년대"];
+
+const GRADES = [
+  {min:1800,num:"1",title:"밈 석학",quote:"밈으로 박사 학위 논문을 쓸 수 있는 경지입니다."},
+  {min:1500,num:"2",title:"밈 원어민",quote:"숨쉬듯 밈을 구사합니다. 단톡방의 지배자."},
+  {min:1200,num:"3",title:"밈 생활인",quote:"대화의 70%가 밈이어도 생존 가능합니다."},
+  {min:900, num:"4",title:"밈 관광객",quote:"유행이 끝날 때쯤 도착하시는 편입니다."},
+  {min:600, num:"5",title:"밈 문맹 위험군",quote:"단톡방에서 혼자 물음표를 띄우는 분이시군요."},
+  {min:-1,  num:"6",title:"밈 화석",quote:"문화재청(비공식) 보호 대상입니다."}
+];
+const AGE_BANDS = [
+  {max:19,label:"잼민이 밈 원어민"},
+  {max:26,label:"MZ 최전선 요원"},
+  {max:33,label:"신구 밈 잡식형"},
+  {max:41,label:"싸이월드 향수 세대"},
+  {max:99,label:"버디버디 고인물"}
+];
+const CHALLENGE_LINES = [
+  "넌 몇 급 나오나 보자 →",
+  "단톡방 최약체 가리자 →",
+  "3분이면 밈 연령 나온다 →",
+  "이거 풀고 밈 화석인지 확인해 봐 →"
+];
+const TICKER_LINES = [
+  "본 검정은 아무런 공신력이 없습니다.",
+  "오늘의 12문항은 전국 응시자 전원에게 동일하게 출제됩니다.",
+  "부정행위(검색)는 본인의 양심이 감독합니다.",
+  "성적 이의신청은 받지 않습니다. 어차피 안 바뀝니다.",
+  "재응시는 성적통지표에 'N수생'으로 정직하게 기재됩니다."
+];
+
+/* ---------- 유틸 ---------- */
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+const DEBUG = params.get("debug") === "1";
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function seededShuffle(arr,rnd){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function kstDateStr(){ // YYYY-MM-DD (KST, UTC+9 고정)
+  if(params.get("exam")) {
+    const p = params.get("exam");
+    return p.slice(0,4)+"-"+p.slice(4,6)+"-"+p.slice(6,8);
+  }
+  return new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+}
+function roundNo(dateStr){
+  const d1 = new Date(CONFIG.LAUNCH+"T00:00:00Z"), d2 = new Date(dateStr+"T00:00:00Z");
+  return Math.max(1, Math.round((d2-d1)/864e5)+1);
+}
+function store(k,v){try{localStorage.setItem("mng:"+k,JSON.stringify(v))}catch(e){}}
+function load(k,d){try{const v=localStorage.getItem("mng:"+k);return v===null?d:JSON.parse(v)}catch(e){return d}}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2400)}
+
+/* ---------- 출제 ---------- */
+function buildDailySet(dateStr){
+  const seed = parseInt(dateStr.replace(/-/g,""),10);
+  const rnd = mulberry32(seed);
+  let picked = [];
+  for(const era of [0,1,2]){
+    const pool = QUESTIONS.filter(q=>q.e===era);
+    picked = picked.concat(seededShuffle(pool,rnd).slice(0,4));
+  }
+  picked = seededShuffle(picked,rnd).sort((a,b)=>a.d-b.d); // 난이도 오름차순, 동급 내 시드 셔플
+  // 선지도 시드로 셔플(전국 동일 시험지)
+  return picked.map((q,qi)=>{
+    const r2 = mulberry32(seed*7+qi*131);
+    const idx = seededShuffle([0,1,2,3],r2);
+    return {...q, view:idx.map(i=>q.c[i]), answer:idx.indexOf(0)};
+  });
+}
+function buildEndlessNext(usedSet){
+  let candidates = QUESTIONS.map((q,i)=>i).filter(i=>!usedSet.has(i));
+  if(candidates.length===0){usedSet.clear();candidates=QUESTIONS.map((q,i)=>i)}
+  const pick = candidates[Math.floor(Math.random()*candidates.length)];
+  usedSet.add(pick);
+  const q = QUESTIONS[pick];
+  const idx = [0,1,2,3].sort(()=>Math.random()-.5);
+  return {...q, view:idx.map(i=>q.c[i]), answer:idx.indexOf(0)};
+}
+
+/* ---------- 상태 ---------- */
+const S = {
+  mode:"daily", qs:[], idx:0, score:0, streak:0, maxStreak:0,
+  marks:[], picks:[], lives:3, endlessUsed:new Set(), endlessCount:0,
+  timer:null, tStart:0, tMax:0, answered:false, result:null
+};
+
+function timeForIndex(i){
+  let t;
+  if(S.mode==="endless"){ t = Math.max(2.8, 6 - S.endlessCount*0.12); }
+  else { t = i<4 ? 8 : i<8 ? 6 : 4.5; }
+  return DEBUG ? t*4 : t;
+}
+
+/* ---------- 화면 전환 ---------- */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $("#"+id).classList.add("active");
+  window.scrollTo({top:0});
+}
+
+/* ---------- 홈 ---------- */
+let tickerIdx=0;
+function renderHome(){
+  const today = kstDateStr(), n = roundNo(today);
+  $("#round-label").textContent = `제 ${n}회 정기검정 · ${today}`;
+  $("#streak-chip").textContent = load("streak",{n:0}).n;
+  const saved = load("daily:"+today,null);
+  if(saved){
+    $("#today-chip").style.display="";
+    $("#today-grade").textContent = saved.grade+"급";
+    $("#btn-view-result").style.display="";
+    $("#btn-start").textContent = "재수하기 (재응시)";
+  } else {
+    $("#today-chip").style.display="none";
+    $("#btn-view-result").style.display="none";
+    $("#btn-start").textContent = "오늘의 검정 응시하기";
+  }
+}
+setInterval(()=>{tickerIdx=(tickerIdx+1)%TICKER_LINES.length;$("#ticker").textContent=TICKER_LINES[tickerIdx]},4200);
+
+/* ---------- 시험 진행 ---------- */
+function startExam(mode){
+  S.mode=mode; S.idx=0; S.score=0; S.streak=0; S.maxStreak=0;
+  S.marks=[]; S.picks=[]; S.lives=3; S.endlessUsed=new Set(); S.endlessCount=0;
+  const today=kstDateStr();
+  if(mode==="daily"){
+    S.qs = buildDailySet(today);
+    $("#exam-mode-label").textContent = `제 ${roundNo(today)}회 정기검정`;
+    $("#q-total").textContent = S.qs.length;
+    $("#lives").style.display="none";
+  } else {
+    S.qs = [buildEndlessNext(S.endlessUsed)];
+    $("#exam-mode-label").textContent = "무한급수 모드";
+    $("#q-total").textContent = "∞";
+    $("#lives").style.display="";
+  }
+  show("scr-exam");
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q = S.qs[S.idx];
+  S.answered=false;
+  $("#q-no").textContent = S.idx+1;
+  $("#era-badge").textContent = ERA_NAMES[q.e];
+  $("#era-badge").className = "era-badge era-"+q.e;
+  $("#q-text").textContent = `Q${S.idx+1}. ${q.q}`;
+  if(S.mode==="endless") $("#lives").textContent = "❤️".repeat(S.lives)+"🖤".repeat(3-S.lives);
+  const nos = ["①","②","③","④"];
+  const box = $("#choices"); box.innerHTML="";
+  q.view.forEach((text,i)=>{
+    const b=document.createElement("button");
+    b.className="btn choice"+(DEBUG&&i===q.answer?" debug-answer":"");
+    b.innerHTML=`<span class="no">${nos[i]}</span><span>${text}</span>`;
+    b.onclick=()=>answer(i);
+    box.appendChild(b);
+  });
+  $("#combo").textContent = S.streak>=2 ? `콤보 ×${S.streak} 진행 중` : "";
+  startTimer();
+}
+
+function startTimer(){
+  stopTimer();
+  S.tMax = timeForIndex(S.idx)*1000;
+  S.tStart = performance.now();
+  const bar=$("#timerbar");
+  bar.className=""; bar.style.width="100%";
+  S.timer=setInterval(()=>{
+    const left = 1 - (performance.now()-S.tStart)/S.tMax;
+    if(left<=0){stopTimer();onTimeout();return}
+    bar.style.width=(left*100)+"%";
+    bar.className = left<0.25?"crit":left<0.55?"warn":"";
+  },50);
+}
+function stopTimer(){if(S.timer){clearInterval(S.timer);S.timer=null}}
+
+function floatFeedback(txt,color){
+  const f=$("#feedback-float");
+  f.textContent=txt; f.style.color=color;
+  f.classList.remove("show"); void f.offsetWidth; f.classList.add("show");
+}
+
+function lockChoices(correctIdx,pickedIdx){
+  document.querySelectorAll("#choices .choice").forEach((b,i)=>{
+    b.disabled=true;
+    if(i===correctIdx)b.classList.add("correct");
+    else if(i===pickedIdx)b.classList.add("wrong");
+  });
+}
+
+function answer(i){
+  if(S.answered)return;
+  S.answered=true; stopTimer();
+  const q=S.qs[S.idx];
+  const leftRatio = Math.max(0, 1-(performance.now()-S.tStart)/S.tMax);
+  const correct = i===q.answer;
+  S.picks.push(q.view[i]);
+  lockChoices(q.answer,i);
+  if(correct){
+    S.streak++; S.maxStreak=Math.max(S.maxStreak,S.streak);
+    const gained = 100 + Math.round(50*leftRatio) + 10*Math.min(S.streak-1,5);
+    S.score+=gained;
+    S.marks.push(leftRatio>0.5?"🟩":"🟨");
+    floatFeedback(`+${gained}`,"var(--ok)");
+  } else {
+    S.streak=0;
+    S.marks.push("🟥");
+    floatFeedback("오답","var(--red)");
+    if(S.mode==="endless")S.lives--;
+  }
+  setTimeout(nextQuestion, correct?750:1200);
+}
+function onTimeout(){
+  if(S.answered)return;
+  S.answered=true;
+  const q=S.qs[S.idx];
+  S.picks.push(null);
+  S.streak=0; S.marks.push("⬛");
+  lockChoices(q.answer,-1);
+  floatFeedback("시간 초과","var(--red)");
+  if(S.mode==="endless")S.lives--;
+  setTimeout(nextQuestion,1200);
+}
+
+function nextQuestion(){
+  if(S.mode==="endless"){
+    S.endlessCount++;
+    if(S.lives<=0){finishEndless();return}
+    S.qs.push(buildEndlessNext(S.endlessUsed));
+    S.idx++;
+    renderQuestion();
+    return;
+  }
+  S.idx++;
+  if(S.idx>=S.qs.length){finishDaily();return}
+  renderQuestion();
+}
+
+/* ---------- 채점 ---------- */
+function eraAccuracy(){
+  const tot=[0,0,0],hit=[0,0,0];
+  S.qs.forEach((q,i)=>{
+    if(i>=S.marks.length)return;
+    tot[q.e]++;
+    if(S.marks[i]==="🟩"||S.marks[i]==="🟨")hit[q.e]++;
+  });
+  return tot.map((t,i)=>t?hit[i]/t:0);
+}
+function gradeOf(score){return GRADES.find(g=>score>=g.min)}
+function memeAge(acc,correctTotal){
+  if(correctTotal===0)return null;
+  const age = Math.round(20 + acc[0]*16 + acc[1]*7 - acc[2]*11);
+  return Math.min(55,Math.max(14,age));
+}
+function ageBand(age){
+  if(age===null)return "측정 불가 (밈 진공 상태)";
+  return AGE_BANDS.find(b=>age<=b.max).label;
+}
+
+function finishDaily(){
+  const today=kstDateStr();
+  const acc=eraAccuracy();
+  const correctTotal=S.marks.filter(m=>m==="🟩"||m==="🟨").length;
+  const g=gradeOf(S.score);
+  const age=memeAge(acc,correctTotal);
+  const prev=load("daily:"+today,null);
+  const attempts=(prev?prev.attempts:0)+1;
+  const result={
+    date:today,round:roundNo(today),score:S.score,grade:g.num,title:g.title,quote:g.quote,
+    age,ageBand:ageBand(age),acc,marks:S.marks.slice(),maxStreak:S.maxStreak,
+    picks:S.picks.slice(),qIdx:S.qs.map(q=>QUESTIONS.indexOf(QUESTIONS.find(x=>x.q===q.q))),
+    attempts
+  };
+  // 첫 응시 성적만 '정식 성적'으로 보존, 재응시는 attempts만 증가 + 최신 표시용 데이터 갱신
+  store("daily:"+today, prev ? {...prev,attempts,latest:result} : {...result,latest:null});
+  // 스트릭
+  const st=load("streak",{n:0,last:null});
+  if(st.last!==today){
+    const y=new Date(new Date(today).getTime()-864e5).toISOString().slice(0,10);
+    st.n = st.last===y ? st.n+1 : 1;
+    st.last=today;
+    store("streak",st);
+  }
+  S.result=result;
+  renderResult(result);
+}
+
+function finishEndless(){
+  const best=Math.max(load("best-endless",0),S.score);
+  store("best-endless",best);
+  const acc=eraAccuracy();
+  const correctTotal=S.marks.filter(m=>m==="🟩"||m==="🟨").length;
+  const g=gradeOf(Math.round(S.score/Math.max(1,S.endlessCount)*12)); // 평균 페이스 기준 참고 급수
+  S.result={
+    mode:"endless",date:kstDateStr(),round:roundNo(kstDateStr()),score:S.score,best,
+    grade:g.num,title:"무한급수 도전자",quote:`${S.endlessCount}문항 생존 · 정답 ${correctTotal}개 · 역대 최고 ${best}점`,
+    age:memeAge(acc,correctTotal),ageBand:ageBand(memeAge(acc,correctTotal)),acc,
+    marks:S.marks.slice(),maxStreak:S.maxStreak,picks:S.picks.slice(),attempts:1
+  };
+  renderResult(S.result);
+}
+
+/* ---------- 결과 렌더 ---------- */
+const NSU=["","","재수생","삼수생","사수생"];
+function nsuLabel(n){return n<=1?"":(NSU[n]||`${n}수생`)}
+
+function renderResult(r){
+  $("#result-round").textContent = r.mode==="endless"
+    ? "무한급수 모드 결과"
+    : `제 ${r.round}회 밈 능력 검정시험 · ${r.date}`;
+  $("#grade-num").textContent=r.grade;
+  $("#grade-title").textContent=`칭호: ${r.title}`;
+  $("#grade-quote").textContent=`"${r.quote}"`;
+  $("#r-score").textContent=r.score.toLocaleString();
+  $("#r-score-max").textContent = r.mode==="endless" ? "(무한 모드)" : "/ 약 2,250점 만점";
+  $("#r-age").textContent = r.age===null?"측정 불가":`${r.age}세`;
+  $("#r-age-band").textContent = `· ${r.ageBand}`;
+  $("#r-combo").textContent=r.maxStreak;
+  [0,1,2].forEach(i=>{
+    const p=Math.round(r.acc[i]*100);
+    $("#pct-"+i).textContent=p+"%";
+    setTimeout(()=>{$("#bar-"+i).style.width=p+"%"},60);
+  });
+  $("#emoji-grid").textContent=r.marks.join("");
+  const nsu=nsuLabel(r.attempts);
+  $("#nsu-mark").style.display = nsu?"block":"none";
+  $("#nsu-mark").textContent=nsu;
+  $("#name-input").value = load("name","");
+  updateSharePreview();
+  const stamp=$("#stamp");
+  stamp.classList.remove("on"); void stamp.offsetWidth; stamp.classList.add("on");
+  if(CONFIG.ADS.enabled){$("#ad-slot").style.display="block"}
+  show("scr-result");
+}
+
+function buildShareText(r){
+  const line=CHALLENGE_LINES[Math.floor(Math.random()*CHALLENGE_LINES.length)];
+  const head = r.mode==="endless"
+    ? `밈능검 무한급수 ${r.score.toLocaleString()}점 (${r.marks.length}문항 생존)`
+    : `밈능검 제${r.round}회 | ${r.grade}급 ${r.title} | 밈연령 ${r.age===null?"측정불가":r.age+"세"}`;
+  return `${head}\n${r.marks.join("")}\n${line} ${CONFIG.URL}`;
+}
+function updateSharePreview(){ if(S.result)$("#share-preview").textContent=buildShareText(S.result) }
+
+async function shareResult(){
+  const text=buildShareText(S.result);
+  if(navigator.share){
+    try{await navigator.share({text});return}catch(e){if(e.name==="AbortError")return}
+  }
+  try{await navigator.clipboard.writeText(text);toast("결과가 복사됐습니다. 단톡방에 붙여넣기!")}
+  catch(e){toast("복사 실패 — 미리보기 텍스트를 길게 눌러 복사하세요")}
+}
+
+/* ---------- 오답노트 ---------- */
+function renderReview(){
+  const r=S.result; if(!r)return;
+  const list=$("#review-list"); list.innerHTML="";
+  S.qs.slice(0,r.marks.length).forEach((q,i)=>{
+    const my=r.picks[i];
+    const ok=r.marks[i]==="🟩"||r.marks[i]==="🟨";
+    const div=document.createElement("div");
+    div.className="review-item";
+    div.innerHTML=`
+      <span class="mark">${r.marks[i]}</span>
+      <span class="era-badge era-${q.e}">${ERA_SHORT[q.e]}</span>
+      <div class="rq">Q${i+1}. ${q.q}</div>
+      <div class="ra">
+        ${ok
+          ? `<span class="yours-right">✓ ${q.c[0]}</span>`
+          : `내 답: <span class="yours-wrong">${my===null?"(시간 초과)":my}</span><br>정답: <b>${q.c[0]}</b>`}
+      </div>
+      <div class="note">${q.n}</div>`;
+    list.appendChild(div);
+  });
+  show("scr-review");
+}
+
+/* ---------- 성적통지표 이미지 (Canvas) ---------- */
+async function drawCard(){
+  const r=S.result; if(!r)return null;
+  try{await document.fonts.load('900 100px "Noto Serif KR"');await document.fonts.load('600 40px "Noto Serif KR"');await document.fonts.load('500 30px "Noto Sans KR"')}catch(e){}
+  const cv=$("#card-canvas"),ctx=cv.getContext("2d");
+  const W=1080,H=1350;
+  const SERIF='"Noto Serif KR",serif', SANS='"Noto Sans KR",sans-serif';
+  // 종이 배경
+  ctx.fillStyle="#f6f1e4";ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="#241f14";ctx.lineWidth=5;ctx.strokeRect(28,28,W-56,H-56);
+  ctx.lineWidth=1.5;ctx.strokeRect(42,42,W-84,H-84);
+  ctx.fillStyle="#241f14";
+  // 헤더
+  ctx.textAlign="center";
+  ctx.font=`600 30px ${SERIF}`;
+  ctx.fillText(r.mode==="endless"?"밈 능력 검정시험 · 무한급수 모드":`제 ${r.round}회 밈 능력 검정시험`,W/2,110);
+  ctx.font=`900 78px ${SERIF}`;
+  ctx.fillText("성 적 통 지 표",W/2,196);
+  ctx.font=`500 24px ${SANS}`;ctx.fillStyle="#8a2b25";
+  ctx.fillText("( 비 공 식 )",W/2,236);
+  // 정보 행
+  ctx.fillStyle="#4c4433";ctx.font=`500 25px ${SANS}`;
+  const name=(load("name","")||"무명의 응시자").slice(0,10);
+  const examNo=`${r.date.replace(/-/g,"")}-${String(r.score).padStart(4,"0")}`;
+  ctx.fillText(`성명: ${name}    응시일: ${r.date}    수험번호: ${examNo}`,W/2,290);
+  ctx.strokeStyle="#241f14";ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(70,318);ctx.lineTo(W-70,318);ctx.stroke();
+  // 급수
+  ctx.fillStyle="#241f14";
+  if(r.mode==="endless"){
+    ctx.font=`900 150px ${SERIF}`;
+    ctx.fillText(`${r.score.toLocaleString()}점`,W/2,520);
+    ctx.font=`600 34px ${SERIF}`;
+    ctx.fillText(`${r.marks.length}문항 생존 · 역대 최고 ${r.best.toLocaleString()}점`,W/2,585);
+  } else {
+    ctx.font=`900 230px ${SERIF}`;
+    ctx.fillText(`제 ${r.grade} 급`,W/2,555);
+  }
+  ctx.font=`600 40px ${SERIF}`;
+  ctx.fillText(`칭호 : ${r.title}`,W/2,650);
+  ctx.font=`500 27px ${SANS}`;ctx.fillStyle="#6d6450";
+  wrapText(ctx,`"${r.quote}"`,W/2,700,860,38);
+  // 점수표
+  ctx.fillStyle="#241f14";ctx.font=`500 28px ${SANS}`;
+  const rowY=810;
+  ctx.fillText(`취득 점수  ${r.score.toLocaleString()}점        측정 밈 연령  ${r.age===null?"측정 불가":r.age+"세 ("+r.ageBand+")"}`,W/2,rowY);
+  ctx.fillText(`최대 콤보  ${r.maxStreak}연속`,W/2,rowY+46);
+  // 시대별 바
+  const eras=["고대(2000년대)","중세(2010년대)","현대(2020년대)"];
+  let by=930;
+  ctx.textAlign="left";
+  for(let i=0;i<3;i++){
+    const p=Math.round(r.acc[i]*100);
+    ctx.font=`500 24px ${SANS}`;ctx.fillStyle="#6d6450";
+    ctx.fillText(eras[i],90,by+8);
+    ctx.fillStyle="#e2dac4";rr(ctx,320,by-14,560,26,13);ctx.fill();
+    ctx.fillStyle="#241f14";if(p>0){rr(ctx,320,by-14,560*p/100,26,13);ctx.fill()}
+    ctx.font=`700 24px ${SANS}`;ctx.fillStyle="#241f14";
+    ctx.fillText(p+"%",905,by+8);
+    by+=56;
+  }
+  // 이모지 그리드
+  ctx.textAlign="center";
+  ctx.font=`400 44px ${SANS}`;
+  ctx.fillText(r.marks.join(" "),W/2,by+42);
+  // 도장
+  ctx.save();
+  ctx.translate(W-165,505);ctx.rotate(0.16);
+  ctx.strokeStyle="rgba(179,38,30,.85)";ctx.lineWidth=6;
+  ctx.beginPath();ctx.arc(0,0,86,0,7);ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,74,0,7);ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle="rgba(179,38,30,.85)";
+  ctx.font=`900 40px ${SERIF}`;
+  ctx.fillText("밈검정원",0,-6);
+  ctx.font=`900 34px ${SERIF}`;
+  ctx.fillText("검 인",0,38);
+  ctx.restore();
+  // N수 워터마크
+  const nsu=nsuLabel(r.attempts);
+  if(nsu){
+    ctx.save();ctx.translate(180,430);ctx.rotate(-0.22);
+    ctx.strokeStyle="rgba(179,38,30,.7)";ctx.lineWidth=4;
+    ctx.font=`900 54px ${SERIF}`;ctx.fillStyle="rgba(179,38,30,.7)";
+    const w=ctx.measureText(nsu).width;
+    ctx.strokeRect(-w/2-18,-46,w+36,72);
+    ctx.fillText(nsu,0,8);
+    ctx.restore();
+  }
+  // 하단
+  ctx.fillStyle="#8a806b";ctx.font=`400 21px ${SANS}`;
+  ctx.fillText("본 성적은 어떠한 법적 효력도 없으며, 응시자의 밈 감각만을 증명합니다.",W/2,H-118);
+  ctx.fillStyle="#241f14";ctx.font=`700 28px ${SANS}`;
+  ctx.fillText(CONFIG.URL.replace("https://",""),W/2,H-72);
+  return cv;
+}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function wrapText(ctx,text,x,y,maxW,lh){
+  const words=text.split(" ");let line="",yy=y;
+  for(const w of words){
+    const t=line?line+" "+w:w;
+    if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,yy);line=w;yy+=lh}
+    else line=t;
+  }
+  ctx.fillText(line,x,yy);
+}
+async function saveCard(){
+  const cv=await drawCard(); if(!cv)return;
+  cv.toBlob(async blob=>{
+    if(!blob){toast("이미지 생성 실패");return}
+    const file=new File([blob],`밈능검-성적표-${S.result.date}.png`,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],text:"밈능검 성적통지표"});return}catch(e){if(e.name==="AbortError")return}
+    }
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=file.name;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast("성적통지표 이미지를 저장했습니다");
+  },"image/png");
+}
+
+/* ---------- 이벤트 ---------- */
+$("#btn-start").onclick=()=>startExam("daily");
+$("#btn-endless").onclick=()=>startExam("endless");
+$("#btn-view-result").onclick=()=>{
+  const saved=load("daily:"+kstDateStr(),null);
+  if(!saved)return;
+  const r=saved.latest||saved;
+  S.result=r;
+  // 오답노트 복원을 위해 문제 세트 재구성
+  S.qs=buildDailySet(kstDateStr());
+  renderResult(r);
+};
+$("#btn-share").onclick=shareResult;
+$("#btn-card").onclick=saveCard;
+$("#btn-review").onclick=renderReview;
+$("#btn-review-back").onclick=()=>show("scr-result");
+$("#btn-retry").onclick=()=>startExam(S.result&&S.result.mode==="endless"?"endless":"daily");
+$("#btn-home").onclick=()=>{renderHome();show("scr-home")};
+$("#name-input").addEventListener("input",e=>{store("name",e.target.value.trim());updateSharePreview()});
+document.addEventListener("keydown",e=>{
+  if($("#scr-exam").classList.contains("active")&&["1","2","3","4"].includes(e.key)){
+    const btns=document.querySelectorAll("#choices .choice");
+    const i=parseInt(e.key)-1;
+    if(btns[i]&&!btns[i].disabled)btns[i].click();
+  }
+  if($("#scr-home").classList.contains("active")&&e.key==="Enter")startExam("daily");
+});
+
+/* ---------- 초기화 ---------- */
+renderHome();
+if(DEBUG)console.log("[밈능검] DEBUG 모드 — 제한시간 4배, 정답 점선 표시, ?exam=YYYYMMDD로 회차 미리보기");
+</script>
+</body>
+</html>
