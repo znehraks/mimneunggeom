@@ -3,3 +3,6 @@ node_modules/
 steam/electron/app/
 steam/electron/dist/
 steam/build/output/
+
+# Local Netlify folder
+.netlify
