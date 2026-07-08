@@ -53,14 +53,15 @@ test/           # e2e.mjs — 배포 전 Playwright 검증 게이트
 steam/          # Steam 배포 준비 팩 (Electron 래퍼 + 절차)
 ```
 
-## 매일 자동 최신화 (Claude)
+## 매일 자동 최신화
 
-`.github/workflows/daily-meme-refresh.yml`가 **매일 00:30 KST** 실행:
-Claude가 `web_search`로 신상 밈을 조사 → 규칙대로 문항 작성(구조화 출력) → 스키마·중복·금지어 검증 → **Playwright E2E 통과 시에만** Netlify 재배포 → 커밋. 새 밈이 없는 날은 아무것도 안 함(no-op).
+**매일 00:30 KST**에 최신 밈을 조사→검증→E2E 통과 시에만 자동 배포. 새 밈이 없는 날은 no-op. 두 경로 중 **하나만** 켜세요.
 
-활성화하려면 GitHub 레포 **Settings → Secrets and variables → Actions**에 3개 시크릿 추가:
-`ANTHROPIC_API_KEY`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`.
-미설정 시 워크플로는 안전하게 건너뜁니다. 수동 테스트는 Actions 탭 → Run workflow. 상세는 [DESIGN.md](DESIGN.md) §6.
+**① Codex 로컬 (활성 · 시크릿 불필요)** — `~/.codex/automations/mimneunggeom-refresh/`에 등록됨. Codex가 `web-access`로 신상 밈 조사 → 후보 JSON → **`scripts/apply-candidates.mjs`**(검증·삽입·E2E·배포를 결정론적으로 처리, 실패 시 원복)를 실행. 로컬 netlify/git 인증을 그대로 써서 **API 키/시크릿이 필요 없습니다.** Codex 앱의 automations 목록에 "밈능검 데일리 밈 자동 최신화"로 나타납니다.
+
+**② GitHub Actions (대안 · 클라우드)** — `.github/workflows/daily-meme-refresh.yml`. Claude API로 동일 흐름. 활성화하려면 레포 **Settings → Secrets → Actions**에 `ANTHROPIC_API_KEY`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID` 추가(미설정 시 no-op).
+
+상세: [DESIGN.md](DESIGN.md) §6.
 
 ## 문항 추가/제보
 

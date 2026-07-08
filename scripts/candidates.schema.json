@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["questions"],
+  "properties": {
+    "questions": {
+      "type": "array",
+      "description": "새로 추가할 최신 밈 문항. 확실히 새롭고 안전한 것만. 없으면 빈 배열.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["t", "d", "q", "c", "n"],
+        "properties": {
+          "t": { "type": "string", "description": "유행 시기 YYYY-MM (최근이어야 함)" },
+          "d": { "type": "integer", "enum": [1, 2, 3], "description": "난이도(1 쉬움~3 마니아)" },
+          "q": { "type": "string", "description": "문제. 밈 이름을 답으로 노출 말고 뜻/출처를 물을 것" },
+          "c": {
+            "type": "array",
+            "description": "선택지 4개. 첫 번째가 정답, 나머지 오답(최소 1개 개그, 1개 함정)",
+            "items": { "type": "string" }
+          },
+          "n": { "type": "string", "description": "해설: 뜻 + 시기/맥락 한 줄" }
+        }
+      }
+    }
+  }
+}

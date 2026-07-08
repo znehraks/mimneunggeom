@@ -16,6 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readQuestions, validateCandidates, insertQuestions } from "./lib/questions.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -30,17 +31,7 @@ const TODAY = kst.toISOString().slice(0, 10);         // YYYY-MM-DD
 const TODAY_YM = TODAY.slice(0, 7);                    // YYYY-MM
 const CUR_YEAR = parseInt(TODAY.slice(0, 4), 10);
 
-// 부적절 문항 자동 게이트(무인 배포 방어) — 걸리면 해당 문항 폐기
-const BLOCKLIST = ["섹스", "성관계", "자살", "강간", "성기", "야동", "존나", "씨발", "병신", "장애인", "김치녀", "한남", "된장녀", "틀딱", "급식충"];
-
 const log = (...a) => console.log("[refresh]", ...a);
-
-function readQuestions(html) {
-  const m = html.match(/const QUESTIONS = \[([\s\S]*?)\n\];/);
-  if (!m) throw new Error("QUESTIONS 배열을 찾지 못함");
-  const arr = new Function("return [" + m[1] + "\n]")();
-  return arr;
-}
 
 async function runWithPauseTurn(params) {
   let res = await client.messages.create(params);
@@ -130,42 +121,6 @@ ${researchText}
   return JSON.parse(txt).questions || [];
 }
 
-function validate(newQs, existingQ) {
-  const existTexts = new Set(existingQ.map((q) => q.q.replace(/\s/g, "")));
-  const existAns = new Set(existingQ.map((q) => q.c[0].replace(/\s/g, "")));
-  const out = [];
-  for (const it of newQs) {
-    const reasons = [];
-    if (!it.q || !it.n) reasons.push("빈 필드");
-    if (!Array.isArray(it.c) || it.c.length !== 4) reasons.push("선택지 4개 아님");
-    if (it.c && new Set(it.c.map((s) => (s || "").trim())).size !== 4) reasons.push("선택지 중복");
-    if (!/^\d{4}-\d{2}$/.test(it.t || "")) reasons.push("t 형식");
-    const y = parseInt((it.t || "0").slice(0, 4), 10);
-    if (y < CUR_YEAR - 1) reasons.push("최신 아님(풀 편입 불가)");
-    if (![1, 2, 3].includes(it.d)) reasons.push("난이도");
-    if (it.q && existTexts.has(it.q.replace(/\s/g, ""))) reasons.push("문제 중복");
-    if (it.c && existAns.has((it.c[0] || "").replace(/\s/g, ""))) reasons.push("정답 중복");
-    const blob = [it.q, it.n, ...(it.c || [])].join(" ");
-    const hit = BLOCKLIST.find((w) => blob.includes(w));
-    if (hit) reasons.push("금지어:" + hit);
-    if (reasons.length) { log("문항 폐기:", it.q, "→", reasons.join(", ")); continue; }
-    out.push({ t: it.t, d: it.d, q: it.q.trim(), c: it.c.map((s) => s.trim()), n: it.n.trim() });
-    if (out.length >= MAX_NEW) break;
-  }
-  return out;
-}
-
-function insert(html, items) {
-  const startTok = "const QUESTIONS = [";
-  const start = html.indexOf(startTok);
-  const eraIdx = html.indexOf("const ERA_NAMES", start);
-  const closeRel = html.lastIndexOf("\n];", eraIdx);
-  const lines = items
-    .map((it) => `{e:2,t:${JSON.stringify(it.t)},d:${it.d},q:${JSON.stringify(it.q)},c:${JSON.stringify(it.c)},n:${JSON.stringify(it.n)}}`)
-    .join(",\n");
-  return html.slice(0, closeRel) + ",\n" + lines + html.slice(closeRel);
-}
-
 (async () => {
   const html = fs.readFileSync(INDEX, "utf8");
   const existingQ = readQuestions(html);
@@ -179,11 +134,11 @@ function insert(html, items) {
 
   const authored = await authorQuestions(researchText, existingQ);
   log(`작성된 후보 ${authored.length}개`);
-  const valid = validate(authored, existingQ);
+  const { valid, dropped } = validateCandidates(authored, existingQ, { curYear: CUR_YEAR, maxNew: MAX_NEW });
+  dropped.forEach((d) => log("문항 폐기:", d.q, "→", d.reasons.join(", ")));
   if (!valid.length) { log("검증 통과 문항 0개 → 종료(변경 없음)"); return; }
 
-  const next = insert(html, valid);
-  fs.writeFileSync(INDEX, next);
+  fs.writeFileSync(INDEX, insertQuestions(html, valid));
   log(`✅ ${valid.length}개 문항 추가:`);
   valid.forEach((v) => log(`   [${v.t}] ${v.q}  (정답: ${v.c[0]})`));
 })().catch((e) => { console.error("[refresh] 실패:", e?.message || e); process.exit(1); });

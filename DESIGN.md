@@ -78,6 +78,17 @@
 - **자동화(구현됨)**: `.github/workflows/daily-meme-refresh.yml`가 매일 00:30 KST에 돌며 Claude가 신상 밈을 조사·작성한다. 무인 배포의 품질 리스크는 **자동 게이트**로 방어: ① 스키마·중복·금지어 검증(scripts/refresh-memes.mjs) ② 통과 문항이 있을 때만 index.html 수정 ③ **배포 전 Playwright E2E**(test/e2e.mjs) 통과 시에만 Netlify 배포, 실패 시 롤백 ④ 새 밈 없으면 no-op(빈 커밋 없음). 사람 검수 대신 "검증+E2E+최신-only 날짜필터"가 안전망. 완전 무인이 부담되면 워크플로의 배포 스텝을 PR 생성으로 바꿔 검수 게이트로 전환 가능.
 
 ## 6. 일일 자동 최신화 파이프라인 (구현됨)
+
+두 가지 실행 경로가 있다. **현재 활성 = Codex 로컬**(시크릿 불필요). GitHub Action은 대안(시크릿 넣으면 활성). **둘 중 하나만 켜라**(동시 실행 시 중복 추가·git 충돌).
+
+### 6-A. Codex 로컬 자동화 (활성 · 권장 · API키/시크릿 불필요)
+- **스케줄러**: Codex 데스크톱 앱의 app-server. automation 정의: `~/.codex/automations/mimneunggeom-refresh/automation.toml`(레포 사본: `automation/codex-automation.toml`). RRULE `FREQ=DAILY;BYHOUR=0;BYMINUTE=30`(00:30 KST).
+- **동작**: Codex(gpt-5.5, web-access)가 신상 밈 조사 → 후보를 `/tmp/mng-candidates.json`에 저장 → **`node scripts/apply-candidates.mjs`** 실행.
+- **`scripts/apply-candidates.mjs`(결정론적 안전 게이트, LLM/네트워크 없음)**: 후보 JSON → `lib/questions.mjs`로 스키마·중복·금지어·최신성 검증 → index.html 삽입 → 로컬 서버+`test/e2e.mjs` → **통과해야만** `netlify deploy`(로컬 인증) + git 커밋/푸시. 실패 시 index.html 원복. `APPLY_DRY_RUN=1`로 배포 없이 검증만.
+- **핵심 안전장치**: Codex의 자유도는 "리서치+후보 JSON"에만, 배포/푸시 등 위험 동작은 리뷰된 결정론적 스크립트가 담당. index.html 직접 편집 금지(프롬프트 명시).
+- **필요 준비**: Codex 로그인(`codex login`, 이미 됨), 로컬 netlify/git 인증(이미 됨), 레포에 playwright+chromium 설치(`npm i playwright && npx playwright install chromium`, 설치 완료). **추가 시크릿 없음.**
+
+### 6-B. GitHub Actions (대안 · 클라우드 · 시크릿 필요)
 - **트리거**: `.github/workflows/daily-meme-refresh.yml` — cron `30 15 * * *`(00:30 KST) + 수동(workflow_dispatch)
 - **1) 리서치**: `scripts/refresh-memes.mjs`가 Claude(`claude-sonnet-5` 기본, `vars.REFRESH_MODEL`로 변경) + `web_search` 서버툴로 최근 1~2개월 신상 한국 밈 조사. 기존 문항 목록을 제외 리스트로 전달(중복 방지)
 - **2) 작성**: 구조화 출력(`output_config.format` json_schema)으로 DESIGN 규칙(정답=c[0], 4지선다, 개그 오답, 해설, `t`=YYYY-MM) 준수 문항 생성(최대 `MAX_NEW`=2)
