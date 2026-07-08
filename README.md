@@ -43,12 +43,24 @@ python3 -m http.server   # http://localhost:8000
 ## 구조
 
 ```
-index.html      # 게임 전체 (마크업 + 스타일 + 엔진 + 문항 82개)
+index.html      # 게임 전체 (마크업 + 스타일 + 엔진 + 문항)
 og.png          # 카톡/SNS 링크 미리보기 이미지
 DESIGN.md       # 설계 SSOT
 MONETIZE.md     # 수익화 실행 가이드 (AdFit/AdSense/게임포털)
+scripts/        # refresh-memes.mjs — Claude 일일 자동 최신화 스크립트
+test/           # e2e.mjs — 배포 전 Playwright 검증 게이트
+.github/        # daily-meme-refresh.yml — 매일 자동 최신화 워크플로
 steam/          # Steam 배포 준비 팩 (Electron 래퍼 + 절차)
 ```
+
+## 매일 자동 최신화 (Claude)
+
+`.github/workflows/daily-meme-refresh.yml`가 **매일 00:30 KST** 실행:
+Claude가 `web_search`로 신상 밈을 조사 → 규칙대로 문항 작성(구조화 출력) → 스키마·중복·금지어 검증 → **Playwright E2E 통과 시에만** Netlify 재배포 → 커밋. 새 밈이 없는 날은 아무것도 안 함(no-op).
+
+활성화하려면 GitHub 레포 **Settings → Secrets and variables → Actions**에 3개 시크릿 추가:
+`ANTHROPIC_API_KEY`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`.
+미설정 시 워크플로는 안전하게 건너뜁니다. 수동 테스트는 Actions 탭 → Run workflow. 상세는 [DESIGN.md](DESIGN.md) §6.
 
 ## 문항 추가/제보
 

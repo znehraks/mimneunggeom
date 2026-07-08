@@ -1,0 +1,79 @@
+name: 밈능검 일일 자동 최신화
+
+# 매일 00:30 KST(=15:30 UTC) Claude가 최신 밈을 조사→검증→E2E 통과 시에만 자동 배포.
+# 수동 실행(테스트)도 가능: Actions 탭 → Run workflow.
+on:
+  schedule:
+    - cron: "30 15 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-meme-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm install --no-save @anthropic-ai/sdk playwright
+
+      - name: Research + author new memes (Claude)
+        id: refresh
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REFRESH_MODEL: ${{ vars.REFRESH_MODEL }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ANTHROPIC_API_KEY 미설정 → 스킵(변경 없음)"; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          node scripts/refresh-memes.mjs
+          if git diff --quiet -- index.html; then
+            echo "새 문항 없음 → 변경 없음"; echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "index.html 변경됨"; echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Chromium (E2E)
+        if: steps.refresh.outputs.changed == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E gate (배포 전 검증)
+        if: steps.refresh.outputs.changed == 'true'
+        run: |
+          python3 -m http.server 8123 >/dev/null 2>&1 &
+          for i in $(seq 1 20); do curl -sf -o /dev/null http://localhost:8123/index.html && break; sleep 0.5; done
+          if BASE="http://localhost:8123/?debug=1" node test/e2e.mjs; then
+            echo "E2E 통과"
+          else
+            echo "E2E 실패 → 변경 롤백, 배포 안 함"; git checkout -- index.html; exit 1
+          fi
+
+      - name: Deploy to Netlify
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "Netlify 시크릿 미설정 → 배포 스킵(문항 변경은 커밋만 됨)"; exit 0
+          fi
+          npx netlify-cli@latest deploy --prod --dir . --site "$NETLIFY_SITE_ID" --message "daily meme refresh"
+
+      - name: Commit refreshed questions
+        if: steps.refresh.outputs.changed == 'true'
+        run: |
+          git config user.name "mimneunggeom-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "chore: 데일리 밈 자동 최신화 ($(date -u +%Y-%m-%d))" || echo "nothing to commit"
+          git push

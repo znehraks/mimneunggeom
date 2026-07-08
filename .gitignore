@@ -6,3 +6,4 @@ steam/build/output/
 
 # Local Netlify folder
 .netlify
+test-results/

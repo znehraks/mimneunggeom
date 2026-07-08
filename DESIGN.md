@@ -75,12 +75,22 @@
 - 신규 밈 추가 = 배열에 **`t`를 최신 날짜로 넣어 append만** 하면 끝. 데일리 풀 편입·오래된 밈 자동 탈락은 코드가 알아서 처리(날짜 기반). e 필드는 아무 값이나 무방(색상 참고용, 판정은 t 기준)
 - **밈은 빨리 식으므로 분기마다 리프레시** 권장: 갓 뜬 밈을 최신 `t`로 추가, 확실히 죽은 밈은 삭제. 강등/승격은 이제 수동 조정 불필요(날짜가 처리)
 - 밈 수명이 짧으니(1~2주) 문항은 "그 주의 신상"보다 **분기~반기 생존한 밈** 위주로 골라 오출제 리스크를 줄인다
-- **자동화 한계(정직)**: 완전 무인 스크래핑+자동출제는 뜻 오류·부적절·개그 없는 오답을 라이브에 올릴 위험이 커 지양. 리서치 보조(트렌드 수집)까지는 자동화 가능하되, 문항 확정은 사람 검수 게이트를 둔다
+- **자동화(구현됨)**: `.github/workflows/daily-meme-refresh.yml`가 매일 00:30 KST에 돌며 Claude가 신상 밈을 조사·작성한다. 무인 배포의 품질 리스크는 **자동 게이트**로 방어: ① 스키마·중복·금지어 검증(scripts/refresh-memes.mjs) ② 통과 문항이 있을 때만 index.html 수정 ③ **배포 전 Playwright E2E**(test/e2e.mjs) 통과 시에만 Netlify 배포, 실패 시 롤백 ④ 새 밈 없으면 no-op(빈 커밋 없음). 사람 검수 대신 "검증+E2E+최신-only 날짜필터"가 안전망. 완전 무인이 부담되면 워크플로의 배포 스텝을 PR 생성으로 바꿔 검수 게이트로 전환 가능.
 
-## 6. 수익화 (MONETIZE.md 참조)
+## 6. 일일 자동 최신화 파이프라인 (구현됨)
+- **트리거**: `.github/workflows/daily-meme-refresh.yml` — cron `30 15 * * *`(00:30 KST) + 수동(workflow_dispatch)
+- **1) 리서치**: `scripts/refresh-memes.mjs`가 Claude(`claude-sonnet-5` 기본, `vars.REFRESH_MODEL`로 변경) + `web_search` 서버툴로 최근 1~2개월 신상 한국 밈 조사. 기존 문항 목록을 제외 리스트로 전달(중복 방지)
+- **2) 작성**: 구조화 출력(`output_config.format` json_schema)으로 DESIGN 규칙(정답=c[0], 4지선다, 개그 오답, 해설, `t`=YYYY-MM) 준수 문항 생성(최대 `MAX_NEW`=2)
+- **3) 검증 게이트**: 4지선다·중복(문제/정답)·`t` 최신성·난이도·금지어(BLOCKLIST) 체크. 통과분만 `t`에 최신 날짜로 index.html에 삽입. 0개면 파일 무변경
+- **4) 배포 게이트**: index.html이 바뀌면 Chromium 설치→로컬 서버→`test/e2e.mjs`(플레이·채점·성적표·오답노트·콘솔에러0·최신-only) 실행. **통과해야만** `netlify deploy --prod`. 실패 시 `git checkout`으로 롤백
+- **5) 커밋**: 배포 후 index.html 변경을 봇 계정으로 커밋·푸시(감사 로그)
+- **필요 시크릿**(레포 Settings→Secrets and variables→Actions): `ANTHROPIC_API_KEY`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`(=`0ec9847a-6b75-451e-8691-eb62d6cf5270`). 미설정 시 워크플로는 안전하게 no-op
+- **비용**: 소넷5 + 웹검색 몇 건 + 소량 토큰 = 일 수 센트 수준. 밈이 매일 새로 뜨지 않으므로 대부분의 날은 no-op(변경·배포 없음)
+
+## 7. 수익화 (MONETIZE.md 참조)
 결과 화면 광고 슬롯(`CONFIG.ADS`) 기본 비활성 → AdFit/AdSense 승인 후 활성화. Steam은 steam/STEAM.md.
 
-## 7. KPI (검증 가설)
+## 8. KPI (검증 가설)
 - D1 공유율(공유 버튼 클릭/응시 완료) ≥ 15%면 바이럴 루프 유효
 - 재방문(스트릭 2일+) ≥ 25%면 데일리 포맷 유효
 - 위 미달 시: 공유 문구 A/B, 문항 난이도 조정(1급이 너무 흔하면 변별력 상실)

@@ -1,0 +1,12 @@
+{
+  "name": "mimneunggeom",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "밈능검 — 밈 능력 검정시험(비공식). 데일리 밈 퀴즈 웹게임 + Claude 일일 자동 최신화.",
+  "scripts": {
+    "refresh": "node scripts/refresh-memes.mjs",
+    "test:e2e": "node test/e2e.mjs",
+    "serve": "python3 -m http.server 8123"
+  }
+}
