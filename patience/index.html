@@ -97,7 +97,13 @@ const GRADES=[
   [-1,"6","무의식 클릭러","누르려고 태어난 손가락입니다."]
 ];
 const TAUNTS=["아직 3초밖에 안 지났어요.","지금쯤 카톡 하나 왔을 텐데…","저 빨간 버튼, 안 궁금해요?","손가락… 근질근질하지 않아요?","한 번만 누르면 편해질 텐데.","다들 이쯤에서 포기하더라고요.","진짜 참네요? 좀 하시는데.","알림 왔어요. (거짓말입니다)"];
-const S={running:false,acc:0,lastTs:0,raf:0,tIv:0,cause:"화면 터치",present:false,camOn:false,stream:null,detector:null,detIv:0};
+const MP_VER="0.10.20";
+const MP_BUNDLE="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@"+MP_VER+"/vision_bundle.mjs";
+const MP_WASM="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@"+MP_VER+"/wasm";
+const MP_MODEL="https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite";
+const GRACE=800; // 얼굴을 이 시간(ms) 이상 못 보면 멈춤(깜빡임 방지)
+const S={running:false,acc:0,lastTs:0,raf:0,tIv:0,cause:"화면 터치",camOn:false,stream:null,
+  mode:"",detReady:false,mp:null,native:null,lastSeen:0,_lastDet:0,_detTs:0};
 let best=load("best",0);
 // 창 이탈/최소화 감지 (headless·실브라우저 모두 안전)
 let winFocused=true, docHidden=false;
@@ -121,61 +127,77 @@ async function setupCamera(){
   $("#cam-status").textContent="카메라 요청 중…";
   try{
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("no getUserMedia");
-    S.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:160,height:120},audio:false});
+    S.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:320},height:{ideal:240}},audio:false});
     const v=$("#cam");v.srcObject=S.stream;await v.play().catch(()=>{});
-    S.camOn=true;
-    if("FaceDetector" in window){try{S.detector=new window.FaceDetector({fastMode:true,maxDetectedFaces:1});}catch(e){S.detector=null;}}
-    S.detIv=setInterval(detect,300);
-    $("#cam-status").textContent=S.detector?"👀 얼굴 감지 중":"👀 카메라 감지 중";
+    S.camOn=true;S.detReady=false;S.lastSeen=performance.now();
+    $("#cam-status").textContent="얼굴 인식 준비 중…";
+    initDetector().then(()=>{S.detReady=true;S.lastSeen=performance.now();document.body.dataset.detmode=S.mode;});
   }catch(e){
-    S.camOn=false;S.present=true;$("#cam-wrap").style.display="none";
+    S.camOn=false;$("#cam-wrap").style.display="none";document.body.dataset.detmode="none";
     Exam.toast("카메라 없이 진행 — 창 이탈만 감지합니다");
   }
 }
+async function initDetector(){
+  // 1순위: MediaPipe(모든 브라우저에서 진짜 얼굴 인식)
+  try{
+    const mod=await import(MP_BUNDLE);
+    const fileset=await mod.FilesetResolver.forVisionTasks(MP_WASM);
+    S.mp=await mod.FaceDetector.createFromOptions(fileset,{baseOptions:{modelAssetPath:MP_MODEL},runningMode:"VIDEO",minDetectionConfidence:0.5});
+    S.mode="mp";return;
+  }catch(e){console.warn("[patience] MediaPipe 로드 실패, 폴백",e);}
+  // 2순위: 브라우저 네이티브 FaceDetector
+  if("FaceDetector" in window){try{S.native=new window.FaceDetector({fastMode:true,maxDetectedFaces:1});S.mode="native";return;}catch(e){}}
+  // 3순위: 밝기 휴리스틱(카메라 가림만 감지)
+  S.mode="heuristic";
+}
 function stopCamera(){
-  if(S.detIv){clearInterval(S.detIv);S.detIv=0;}
   if(S.stream){S.stream.getTracks().forEach(t=>t.stop());S.stream=null;}
+  try{if(S.mp&&S.mp.close)S.mp.close();}catch(e){}S.mp=null;
   S.camOn=false;const v=$("#cam");if(v)v.srcObject=null;
 }
 const _c=document.createElement("canvas");_c.width=64;_c.height=48;
-const _cx=_c.getContext("2d",{willReadFrequently:true});let _prev=null;
-async function detect(){
-  if(!S.running||!S.camOn)return;
-  const v=$("#cam");if(v.readyState<2)return;
+const _cx=_c.getContext("2d",{willReadFrequently:true});
+async function detectStep(now){
+  const v=$("#cam");
+  if(!S.camOn||!v||v.readyState<2||!v.videoWidth)return;
   try{
-    if(S.detector){
-      const faces=await S.detector.detect(v);
-      S.present=!!(faces&&faces.length);
+    if(S.mode==="mp"){
+      const ts=Math.max(now,S._detTs+1);S._detTs=ts;
+      const r=S.mp.detectForVideo(v,ts);
+      if(r&&r.detections&&r.detections.length)S.lastSeen=now;
+    }else if(S.mode==="native"){
+      const faces=await S.native.detect(v);if(faces&&faces.length)S.lastSeen=now;
     }else{
-      // 대체 휴리스틱: 카메라를 가리거나(어두움) 사람이 없으면(정지) 멈춤
-      _cx.drawImage(v,0,0,64,48);const d=_cx.getImageData(0,0,64,48).data;
-      const lum=new Float32Array(64*48);let sum=0;
-      for(let i=0,j=0;i<d.length;i+=4,j++){const l=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];lum[j]=l;sum+=l;}
-      const avg=sum/lum.length;let diff=0;
-      if(_prev){for(let j=0;j<lum.length;j++)diff+=Math.abs(lum[j]-_prev[j]);diff/=lum.length;}
-      _prev=lum;
-      // 너무 어두우면(가림) 부재. 밝기 정상이면 present (정확한 시선추적은 브라우저 한계)
-      S.present=avg>22;
+      _cx.drawImage(v,0,0,64,48);const d=_cx.getImageData(0,0,64,48).data;let sum=0;
+      for(let i=0;i<d.length;i+=4)sum+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+      if(sum/(64*48)>22)S.lastSeen=now; // 가리지만 않으면 present(휴리스틱 한계)
     }
-  }catch(e){/* 실패 시 직전 상태 유지 */}
+  }catch(e){/* 프레임 스킵 */}
+}
+function camGateOpen(now){
+  if(!S.camOn)return true;              // 카메라 없으면 창 감지만
+  if(!S.detReady)return true;           // 인식기 로딩 중엔 통과(워밍업)
+  return now-S.lastSeen<GRACE;          // 최근 GRACE 안에 얼굴 봤으면 통과
 }
 function loop(now){
   if(!S.running)return;
   now=now||performance.now();
   if(!S.lastTs)S.lastTs=now;
   const dt=now-S.lastTs;S.lastTs=now;
-  const camGate=S.camOn?S.present:true;
-  const active=!docHidden&&winFocused&&camGate;
+  if(S.camOn&&now-S._lastDet>90){S._lastDet=now;detectStep(now);}
+  const active=!docHidden&&winFocused&&camGateOpen(now);
   if(active)S.acc+=dt;
   const s=S.acc/1000;$("#elapsed").textContent=s.toFixed(1);
   const hold=$("#hold"),note=$("#pause-note");
+  const modeLabel=S.mode==="mp"?"얼굴 인식 중":S.mode==="native"?"얼굴 감지 중":"카메라 감지(기본)";
   if(active){
     hold.classList.remove("paused");note.style.display="none";
-    if(S.camOn)$("#cam-status").textContent=S.detector?"👀 얼굴 감지 중":"👀 감지 중 (화면 유지)";
+    if(S.camOn)$("#cam-status").textContent="👀 "+(S.detReady?modeLabel:"얼굴 인식 준비 중…");
   }else{
     hold.classList.add("paused");note.style.display="block";
+    const camPaused=S.camOn&&!camGateOpen(now)&&!docHidden&&winFocused;
     note.textContent="⏸ "+((docHidden||!winFocused)?"창으로 돌아오세요 (시간 멈춤)":"화면을 보세요! 시간이 멈췄어요");
-    if(S.camOn)$("#cam-status").textContent="🚫 화면을 보고 있지 않아요";
+    if(S.camOn)$("#cam-status").textContent=camPaused?"🚫 얼굴이 안 보여요 (시간 멈춤)":"⏸ 창 밖입니다";
   }
   const bar=$("#timerbar");bar.className=s>=15?"":s>=8?"warn":"crit";
   S.raf=requestAnimationFrame(loop);
@@ -212,6 +234,7 @@ $("#btn-card").onclick=()=>save(cardResult());
 $("#name-input").addEventListener("input",e=>{store("name",e.target.value.trim());updatePreview();});
 // 게임 화면 아무 곳이나 누르면 종료(단, bait는 별도 사유)
 $("#hold").addEventListener("pointerdown",e=>{if(!S.running)return;const bait=e.target.closest("#bait");finish(bait?"'당첨' 버튼을 눌러버림":"화면 터치");});
+if(new URLSearchParams(location.search).get("debug")==="1")window.__pat=S;
 renderHome();
 </script>
 </body>
