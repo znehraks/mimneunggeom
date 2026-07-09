@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>인내심 검정 — 밈검정원(비공식)</title>
+<meta name="description" content="화면을 건드리지 말고 최대한 오래 버티세요. 버틴 시간으로 인내심 급수를 국가공인(비공식) 판정합니다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="인내심 검정 — 넌 몇 초나 참을 수 있어?">
+<meta property="og:description" content="아무것도 누르지 않고 버티기. 버틴 시간 = 인내심 급수 성적표. 대부분 8초 안에 굴복합니다.">
+<meta property="og:url" content="https://mimneunggeom.netlify.app/patience">
+<meta property="og:image" content="https://mimneunggeom.netlify.app/patience/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧘</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="/assets/exam.css" rel="stylesheet">
+<style>
+#hold{user-select:none;min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;border:1.5px dashed var(--line);position:relative;overflow:hidden}
+#elapsed{font-family:var(--serif);font-weight:900;font-size:92px;line-height:1}
+#taunt{font-size:15px;color:var(--sub);margin-top:14px;min-height:24px;text-align:center;word-break:keep-all;padding:0 12px}
+#bait{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;border:none;border-radius:99px;padding:12px 20px;font-weight:700;font-size:14px;font-family:var(--sans);cursor:pointer;animation:wig 1.1s ease-in-out infinite}
+@keyframes wig{0%,100%{transform:translateX(-50%) rotate(-3deg)}50%{transform:translateX(-50%) rotate(3deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+<main>
+  <section id="scr-home" class="screen active">
+    <div id="seal">밈검<br>정원</div>
+    <div class="subtitle">국가공인 아님 · 제3종 인내 검정</div>
+    <h1 class="title">인내심 검정</h1>
+    <div class="round-label">화면을 건드리지 말고 버텨라</div>
+    <div class="stat-row"><span class="chip">🏆 최고 기록 <b id="best-chip">0.0</b>초</span><span class="chip">🧘 아무것도 하지 마세요</span></div>
+    <button class="btn primary" id="btn-start">응시하기</button>
+    <p class="small" style="text-align:center;margin-top:12px">시작하면 시간이 흐릅니다. <b>아무 데도 누르지 말고</b> 최대한 버티세요.<br>화면을 건드리는 순간(또는 저 유혹의 버튼을 누르는 순간) 측정이 끝납니다.</p>
+  </section>
+
+  <section id="scr-game" class="screen">
+    <div id="timerbar-wrap"><div id="timerbar" style="width:100%"></div></div>
+    <div id="hold">
+      <div id="elapsed">0.0</div>
+      <div id="taunt">…</div>
+      <button id="bait">🎁 누르면 즉시 당첨! (누르지 마세요)</button>
+    </div>
+    <p class="small" style="text-align:center;margin-top:12px">버틴 시간이 곧 급수입니다. 참으세요…</p>
+  </section>
+
+  <section id="scr-result" class="screen">
+    <div class="card" style="padding-top:26px">
+      <div class="sheet-head"><div class="t1" id="r-round">제 1회 인내심 검정</div><div class="t2">성 적 통 지 표</div></div>
+      <div class="grade-zone">
+        <div class="grade-big">제 <span id="r-grade">-</span> <small>급</small></div>
+        <div class="grade-title" id="r-title">칭호</div>
+        <div class="grade-quote" id="r-quote">한줄평</div>
+        <div class="stamp" id="stamp">밈검정원<br>검인</div>
+      </div>
+      <table class="score-table">
+        <tr><td>버틴 시간</td><td><b id="r-sec">0</b> 초</td></tr>
+        <tr><td>굴복 사유</td><td><b id="r-cause">화면 터치</b></td></tr>
+        <tr><td>역대 최고</td><td><b id="r-best">0</b> 초</td></tr>
+      </table>
+      <hr class="rule">
+      <div id="name-row"><label for="name-input">성적표 성명</label><input id="name-input" maxlength="10" placeholder="무명의 응시자"></div>
+      <div class="share-preview" id="share-preview"></div>
+    </div>
+    <button class="btn primary" id="btn-share">결과 공유하기 (친구 소환)</button>
+    <button class="btn" id="btn-card">성적표 이미지 저장</button>
+    <button class="btn" id="btn-retry">재응시 (이번엔 참는다)</button>
+  </section>
+</main>
+<footer>
+  © 2026 밈검정원(사설 기관 · 비공식) — 순수 재미 목적, 아무 효력 없음.
+  <div class="nav"><a href="/gwangclick">광클 검정</a><a href="/superpower">무쓸모 초능력 검정</a><a href="/">밈능검</a></div>
+</footer>
+</div>
+<canvas id="card-canvas" width="1080" height="1350" hidden></canvas>
+<script src="/assets/exam.js"></script>
+<script>
+"use strict";
+const {$,store,load,toast,save,share}=Exam;
+const PAGE_URL="https://mimneunggeom.netlify.app/patience";
+const GRADES=[
+  [60,"1","참을성 도인","화면과 하나가 된 경지. 알림도 못 이깁니다."],
+  [30,"2","강철 인내심","웬만한 유혹은 다 버팁니다."],
+  [15,"3","보통 사람","딱 참을 만큼 참았습니다."],
+  [8,"4","도파민 새싹","슬슬 손이 근질근질하셨죠?"],
+  [4,"5","도파민 중독","4초라니… 알림 오면 어쩌려고요?"],
+  [-1,"6","무의식 클릭러","누르려고 태어난 손가락입니다."]
+];
+const TAUNTS=["아직 3초밖에 안 지났어요.","지금쯤 카톡 하나 왔을 텐데…","저 빨간 버튼, 안 궁금해요?","손가락… 근질근질하지 않아요?","한 번만 누르면 편해질 텐데.","다들 이쯤에서 포기하더라고요.","진짜 참네요? 좀 하시는데.","알림 왔어요. (거짓말입니다)"];
+const S={running:false,start:0,raf:0,tIv:0,cause:"화면 터치"};
+let best=load("best",0);
+const show=id=>{document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));$("#"+id).classList.add("active");window.scrollTo({top:0});};
+
+function renderHome(){best=load("best",0);$("#best-chip").textContent=best.toFixed(1);show("scr-home");}
+function begin(){
+  show("scr-game");S.running=true;S.start=performance.now();S.cause="화면 터치";
+  $("#elapsed").textContent="0.0";let ti=0;$("#taunt").textContent=TAUNTS[0];
+  S.tIv=setInterval(()=>{ti=(ti+1)%TAUNTS.length;$("#taunt").textContent=TAUNTS[ti];},2600);
+  loop();
+}
+function loop(){
+  if(!S.running)return;
+  const el=(performance.now()-S.start)/1000;
+  $("#elapsed").textContent=el.toFixed(1);
+  const bar=$("#timerbar");bar.className=el>=15?"":el>=8?"warn":"crit"; // 오래 버틸수록 초록
+  S.raf=requestAnimationFrame(loop);
+}
+function gradeOf(s){return GRADES.find(g=>s>=g[0]);}
+function finish(cause){
+  if(!S.running)return;
+  S.running=false;cancelAnimationFrame(S.raf);clearInterval(S.tIv);
+  const sec=(performance.now()-S.start)/1000,g=gradeOf(sec);
+  if(sec>best){best=sec;store("best",best);}
+  $("#r-round").textContent="제 1회 인내심 검정";
+  $("#r-grade").textContent=g[1];$("#r-title").textContent="칭호: "+g[2];$("#r-quote").textContent='"'+g[3]+'"';
+  $("#r-sec").textContent=sec.toFixed(1);$("#r-cause").textContent=cause;$("#r-best").textContent=best.toFixed(1);
+  $("#name-input").value=load("name","");
+  S.result={sec:sec.toFixed(1),grade:g[1],title:g[2],cause,best:best.toFixed(1)};
+  updatePreview();
+  const st=$("#stamp");st.classList.remove("on");void st.offsetWidth;st.classList.add("on");
+  show("scr-result");
+}
+function cardResult(){
+  const r=S.result,name=(load("name","")||"무명의 응시자").slice(0,10);
+  return {examName:"제 1회 인내심 검정",subline:`성명: ${name}    버틴 시간: ${r.sec}초    굴복: ${r.cause}`,
+    big:"제 "+r.grade+" 급",title:"칭호 : "+r.title,quote:`화면을 안 건드리고 ${r.sec}초 버팀`,
+    rows:[["버틴 시간",r.sec+" 초"],["굴복 사유",r.cause],["역대 최고",r.best+" 초"]],
+    footerUrl:PAGE_URL,fileName:"인내심검정-"+r.sec+"초"};
+}
+function shareText(){const r=S.result;return `인내심 검정 ${r.grade}급 · ${r.sec}초 만에 굴복 (${r.cause})\n넌 몇 초나 참나 보자 🧘 ${PAGE_URL}`;}
+function updatePreview(){$("#share-preview").textContent=shareText();}
+
+$("#btn-start").onclick=begin;
+$("#btn-retry").onclick=begin;
+$("#btn-share").onclick=()=>share(shareText());
+$("#btn-card").onclick=()=>save(cardResult());
+$("#name-input").addEventListener("input",e=>{store("name",e.target.value.trim());updatePreview();});
+// 게임 화면 아무 곳이나 누르면 종료(단, bait는 별도 사유)
+$("#hold").addEventListener("pointerdown",e=>{if(!S.running)return;const bait=e.target.closest("#bait");finish(bait?"'당첨' 버튼을 눌러버림":"화면 터치");});
+renderHome();
+</script>
+</body>
+</html>

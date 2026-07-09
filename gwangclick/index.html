@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>광클 능력검정 — 밈검정원(비공식)</title>
+<meta name="description" content="10초간 미친듯이 탭하세요. 초당 타수로 급수와 '손가락 나이'를 국가공인(비공식) 판정해 드립니다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="광클 능력검정 — 당신의 손가락 나이는?">
+<meta property="og:description" content="10초 광클 → 급수 + 손가락 나이 성적표. 친구랑 몇 타 나오나 대결하세요.">
+<meta property="og:url" content="https://mimneunggeom.netlify.app/gwangclick">
+<meta property="og:image" content="https://mimneunggeom.netlify.app/gwangclick/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👆</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="/assets/exam.css" rel="stylesheet">
+<style>
+#tapzone{user-select:none;height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--ink);color:var(--card);border-radius:10px;border:1.5px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
+#tapzone.hit{transform:scale(.985)}
+#tap-count{font-family:var(--serif);font-weight:900;font-size:96px;line-height:1}
+#tap-sub{font-size:14px;opacity:.7;margin-top:6px;letter-spacing:2px}
+#countdown{font-family:var(--serif);font-weight:900;font-size:120px;text-align:center;padding:80px 0;color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="app">
+<main>
+  <!-- 홈 -->
+  <section id="scr-home" class="screen active">
+    <div id="seal">밈검<br>정원</div>
+    <div class="subtitle">국가공인 아님 · 제2종 손가락 검정</div>
+    <h1 class="title">광클 능력검정</h1>
+    <div class="round-label">10초간 얼마나 빨리 누르나</div>
+    <div class="stat-row"><span class="chip">🏆 역대 최고 <b id="best-chip">0</b>타</span><span class="chip">⏱ 10초 · 무한 재도전</span></div>
+    <button class="btn primary" id="btn-start">응시하기</button>
+    <p class="small" style="text-align:center;margin-top:12px">시작하면 3초 뒤 10초간 측정합니다.<br>화면을 손가락으로(또는 스페이스바로) 미친듯이 누르세요. 초당 타수로 <b>급수와 손가락 나이</b>가 나옵니다.</p>
+  </section>
+
+  <!-- 게임 -->
+  <section id="scr-game" class="screen">
+    <div id="countdown" style="display:none">3</div>
+    <div id="play" style="display:none">
+      <div id="timerbar-wrap"><div id="timerbar"></div></div>
+      <div id="tapzone"><div id="tap-count">0</div><div id="tap-sub">눌러! 눌러! 눌러!</div></div>
+      <p class="small" style="text-align:center;margin-top:12px">남은 시간 <b id="time-left">10.0</b>초</p>
+    </div>
+  </section>
+
+  <!-- 결과 -->
+  <section id="scr-result" class="screen">
+    <div class="card" style="padding-top:26px">
+      <div class="sheet-head"><div class="t1" id="r-round">제 1회 광클 능력검정</div><div class="t2">성 적 통 지 표</div></div>
+      <div class="grade-zone">
+        <div class="grade-big">제 <span id="r-grade">-</span> <small>급</small></div>
+        <div class="grade-title" id="r-title">칭호</div>
+        <div class="grade-quote" id="r-quote">한줄평</div>
+        <div class="stamp" id="stamp">밈검정원<br>검인</div>
+      </div>
+      <table class="score-table">
+        <tr><td>10초 기록</td><td><b id="r-taps">0</b> 타</td></tr>
+        <tr><td>초당 타수</td><td><b id="r-cps">0</b> 타/초</td></tr>
+        <tr><td>측정 손가락 나이</td><td><b id="r-age">-</b> 세</td></tr>
+        <tr><td>역대 최고</td><td><b id="r-best">0</b> 타</td></tr>
+      </table>
+      <hr class="rule">
+      <div id="name-row"><label for="name-input">성적표 성명</label><input id="name-input" maxlength="10" placeholder="무명의 응시자"></div>
+      <div class="share-preview" id="share-preview"></div>
+    </div>
+    <button class="btn primary" id="btn-share">결과 공유하기 (친구 소환)</button>
+    <button class="btn" id="btn-card">성적표 이미지 저장</button>
+    <button class="btn" id="btn-retry">재응시 (한 번 더!)</button>
+  </section>
+</main>
+<footer>
+  © 2026 밈검정원(사설 기관 · 비공식) — 순수 재미 목적, 아무 효력 없음.
+  <div class="nav"><a href="/patience">인내심 검정</a><a href="/superpower">무쓸모 초능력 검정</a><a href="/">밈능검</a></div>
+</footer>
+</div>
+<canvas id="card-canvas" width="1080" height="1350" hidden></canvas>
+<script src="/assets/exam.js"></script>
+<script>
+"use strict";
+const {$,store,load,toast,save,share}=Exam;
+const PAGE_URL="https://mimneunggeom.netlify.app/gwangclick";
+const GRADES=[
+  [110,"1","광클의 신","손가락이 몇 개 더 달린 게 아니라면 불가능한 기록입니다."],
+  [90,"2","연타 명장","약지·소지까지 참전시킨 진심이 보입니다."],
+  [70,"3","숙련된 광클러","평균 이상. 게임 좀 하셨군요."],
+  [50,"4","평범한 손가락","딱 사람 손가락. 무난합니다."],
+  [30,"5","느긋한 손가락","산책하듯 누르셨네요."],
+  [-1,"6","화석 손가락","혹시… 발로 누르셨나요?"]
+];
+const S={taps:0,running:false,endAt:0,raf:0};
+let best=load("best",0);
+const show=id=>{document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));$("#"+id).classList.add("active");window.scrollTo({top:0});};
+
+function renderHome(){best=load("best",0);$("#best-chip").textContent=best;show("scr-home");}
+function startCountdown(){
+  show("scr-game");$("#play").style.display="none";
+  const c=$("#countdown");c.style.display="block";let n=3;c.textContent=n;
+  const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);c.textContent="광클!";setTimeout(begin,450);}else c.textContent=n;},700);
+}
+function begin(){
+  $("#countdown").style.display="none";$("#play").style.display="block";
+  S.taps=0;S.running=true;S.endAt=performance.now()+10000;
+  $("#tap-count").textContent="0";
+  loop();
+}
+function loop(){
+  const left=(S.endAt-performance.now())/1000;
+  if(left<=0){finish();return;}
+  $("#time-left").textContent=left.toFixed(1);
+  const bar=$("#timerbar");bar.style.width=(left/10*100)+"%";
+  bar.className=left<2.5?"crit":left<5?"warn":"";
+  S.raf=requestAnimationFrame(loop);
+}
+function tap(){
+  if(!S.running)return;
+  S.taps++;$("#tap-count").textContent=S.taps;
+  const z=$("#tapzone");z.classList.add("hit");setTimeout(()=>z.classList.remove("hit"),40);
+}
+function gradeOf(t){return GRADES.find(g=>t>=g[0]);}
+function fingerAge(t){return Math.min(90,Math.max(15,Math.round(70-t*0.42)));}
+function finish(){
+  S.running=false;cancelAnimationFrame(S.raf);
+  const t=S.taps,g=gradeOf(t),age=fingerAge(t);
+  if(t>best){best=t;store("best",best);}
+  $("#r-round").textContent="제 1회 광클 능력검정";
+  $("#r-grade").textContent=g[1];$("#r-title").textContent="칭호: "+g[2];$("#r-quote").textContent='"'+g[3]+'"';
+  $("#r-taps").textContent=t;$("#r-cps").textContent=(t/10).toFixed(1);$("#r-age").textContent=age;$("#r-best").textContent=best;
+  $("#name-input").value=load("name","");
+  S.result={taps:t,grade:g[1],title:g[2],age,best};
+  updatePreview();
+  const st=$("#stamp");st.classList.remove("on");void st.offsetWidth;st.classList.add("on");
+  show("scr-result");
+}
+function cardResult(){
+  const r=S.result,name=(load("name","")||"무명의 응시자").slice(0,10);
+  return {examName:"제 1회 광클 능력검정",subline:`성명: ${name}    기록: ${r.taps}타    손가락 나이: ${r.age}세`,
+    big:"제 "+r.grade+" 급",bigUnit:"",title:"칭호 : "+r.title,quote:`10초간 ${r.taps}타 · 초당 ${(r.taps/10).toFixed(1)}타`,
+    rows:[["초당 타수",(r.taps/10).toFixed(1)+" 타"],["측정 손가락 나이",r.age+" 세"],["역대 최고",r.best+" 타"]],
+    footerUrl:PAGE_URL,fileName:"광클검정-"+r.taps+"타"};
+}
+function shareText(){const r=S.result;return `광클 검정 ${r.grade}급 · ${r.taps}타 (손가락 나이 ${r.age}세)\n너 몇 타 나오나 보자 👆 ${PAGE_URL}`;}
+function updatePreview(){$("#share-preview").textContent=shareText();}
+
+$("#btn-start").onclick=startCountdown;
+$("#btn-retry").onclick=startCountdown;
+$("#btn-share").onclick=()=>share(shareText());
+$("#btn-card").onclick=()=>save(cardResult());
+$("#name-input").addEventListener("input",e=>{store("name",e.target.value.trim());updatePreview();});
+const zone=$("#tapzone");
+zone.addEventListener("pointerdown",e=>{e.preventDefault();tap();});
+document.addEventListener("keydown",e=>{if(e.code==="Space"&&$("#scr-game").classList.contains("active")){e.preventDefault();tap();}});
+renderHome();
+</script>
+</body>
+</html>

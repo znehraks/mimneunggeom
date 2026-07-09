@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>무쓸모 초능력 검정 — 밈검정원(비공식)</title>
+<meta name="description" content="세 문항이면 당신의 무쓸모 초능력을 국가공인(비공식) 판정해 드립니다. 아무 쓸모 없지만 아무나 못 가집니다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="무쓸모 초능력 검정 — 내 초능력은?">
+<meta property="og:description" content="3초면 끝. 당신만의 극도로 쓸모없는 초능력 판정서. 단톡방에 뿌리기 좋음.">
+<meta property="og:url" content="https://mimneunggeom.netlify.app/superpower">
+<meta property="og:image" content="https://mimneunggeom.netlify.app/superpower/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="/assets/exam.css" rel="stylesheet">
+<style>
+.q-text{font-family:var(--serif);font-weight:600;font-size:21px;text-align:center;margin:0 0 18px;word-break:keep-all}
+.power-text{font-family:var(--serif);font-weight:900;font-size:26px;line-height:1.4;text-align:center;color:var(--ink);word-break:keep-all;margin:6px 0;padding:0 8px}
+/* 초능력 텍스트가 길어 도장과 겹치지 않게 도장을 아래로 */
+#scr-result .stamp{top:auto;bottom:-6px;right:6px}
+</style>
+</head>
+<body>
+<div id="app">
+<main>
+  <section id="scr-home" class="screen active">
+    <div id="seal">밈검<br>정원</div>
+    <div class="subtitle">국가공인 아님 · 제4종 초능력 검정</div>
+    <h1 class="title">무쓸모<br>초능력 검정</h1>
+    <div class="round-label">3문항이면 당신의 초능력이 나옵니다</div>
+    <div class="stat-row"><span class="chip">🦸 아무 쓸모 없음</span><span class="chip">⏱ 10초 컷</span></div>
+    <button class="btn primary" id="btn-start">응시하기</button>
+    <p class="small" style="text-align:center;margin-top:12px">깊게 생각하지 마세요. 아무거나 고르면 됩니다.<br>당신 안에 잠든 <b>극도로 쓸모없는 초능력</b>을 판정해 드립니다.</p>
+  </section>
+
+  <section id="scr-game" class="screen">
+    <div class="card">
+      <div class="small" style="text-align:center;margin-bottom:10px">문항 <b id="q-no">1</b> / 3</div>
+      <p class="q-text" id="q-text"></p>
+      <div id="choices"></div>
+    </div>
+  </section>
+
+  <section id="scr-result" class="screen">
+    <div class="card" style="padding-top:26px">
+      <div class="sheet-head"><div class="t1">제 1회 무쓸모 초능력 검정</div><div class="t2">초 능 력 판 정 서</div></div>
+      <div class="grade-zone">
+        <div class="small" style="letter-spacing:2px">당신의 무쓸모 초능력</div>
+        <div class="power-text" id="r-power">—</div>
+        <div class="grade-quote" id="r-quote"></div>
+        <div class="stamp" id="stamp">밈검정원<br>검인</div>
+      </div>
+      <table class="score-table">
+        <tr><td>초능력 등급</td><td><b id="r-grade">무쓸모 1급</b></td></tr>
+        <tr><td>동일 능력 보유자</td><td>전국 <b id="r-holders">0</b>명</td></tr>
+        <tr><td>각성 확률</td><td><b id="r-prob">0%</b></td></tr>
+      </table>
+      <div class="share-preview" id="share-preview"></div>
+    </div>
+    <button class="btn primary" id="btn-share">결과 공유하기 (친구 소환)</button>
+    <button class="btn" id="btn-card">판정서 이미지 저장</button>
+    <button class="btn" id="btn-retry">다시 각성하기</button>
+  </section>
+</main>
+<footer>
+  © 2026 밈검정원(사설 기관 · 비공식) — 순수 재미 목적, 아무 효력 없음.
+  <div class="nav"><a href="/gwangclick">광클 검정</a><a href="/patience">인내심 검정</a><a href="/">밈능검</a></div>
+</footer>
+</div>
+<canvas id="card-canvas" width="1080" height="1350" hidden></canvas>
+<script src="/assets/exam.js"></script>
+<script>
+"use strict";
+const {$,store,load,toast,save,share}=Exam;
+const PAGE_URL="https://mimneunggeom.netlify.app/superpower";
+const QUESTIONS=[
+  {q:"지금 당신의 왼손은?",c:["뭔가 쥐고 있다","주머니 속","허공에 있다","나도 모른다"]},
+  {q:"오늘 아침에 먹은 것은?",c:["밥","빵","안 먹음","기억이 안 남"]},
+  {q:"지금 심정을 색으로 고르면?",c:["빨강","파랑","노랑","무채색"]}
+];
+const POWERS=[
+  "엘리베이터 닫힘 버튼을 항상 3초 늦게 누르기",
+  "리모컨을 손에 쥔 채로 리모컨 찾기",
+  "무선 이어폰을 한 쪽만 잃어버리기",
+  "라면 물을 매번 3mL 더 붓기",
+  "문 '당기시오'를 힘차게 밀기",
+  "새로 산 볼펜을 3일 안에 잃어버리기",
+  "물티슈 한 장 뽑으려다 다섯 장 뽑기",
+  "냉장고 열고 뭐 꺼내려 했는지 까먹기",
+  "계단 다 내려와서 한 칸 더 있는 줄 알고 헛디디기",
+  "충전기 꽂았는데 안 꽂힌 채로 밤새우기",
+  "카톡 보내고 1초 뒤에 오타 발견하기",
+  "봉지과자 뜯자마자 반 이상 부수기",
+  "지하철 문이 닫히는 순간 정확히 도착하기",
+  "샴푸랑 린스 헷갈려서 두 번 감기",
+  "우산 챙긴 날엔 절대 비 안 오게 하기",
+  "약속 장소 반대 방향으로 5분 걷기",
+  "esc 누른다는 게 꼭 다른 걸 누르기",
+  "빨래 다 개고 양말 한 짝만 실종시키기",
+  "치킨 시키고 젓가락 안 온 걸 다 먹고 알기",
+  "중요한 순간에 배에서 소리 나게 하기",
+  "핸드폰을 손에 든 채로 핸드폰 찾기",
+  "포장 비닐을 항상 반대로 뜯기",
+  "다 쓴 펜을 아까워서 3년 보관하기",
+  "엘리베이터 내릴 층 이미 눌렸는데 또 누르기"
+];
+const QUOTES=["세상에 이보다 쓸모없는 능력이 있을까요.","축하합니다. 아무 데도 쓸 수 없습니다.","이 능력, 매일 발동 중이시죠?","타고났습니다. 안타깝게도.","희귀하지만 아무도 부러워하지 않습니다."];
+const GRADES=["무쓸모 1급 (레전드)","무쓸모 특급","무쓸모 명예의 전당","무쓸모 국가대표"];
+const S={i:0,ans:[]};
+const show=id=>{document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));$("#"+id).classList.add("active");window.scrollTo({top:0});};
+
+function begin(){S.i=0;S.ans=[];show("scr-game");renderQ();}
+function renderQ(){
+  const q=QUESTIONS[S.i];$("#q-no").textContent=S.i+1;$("#q-text").textContent=q.q;
+  const box=$("#choices");box.innerHTML="";const nos=["①","②","③","④"];
+  q.c.forEach((t,i)=>{const b=document.createElement("button");b.className="btn";b.innerHTML=`<span class="serif" style="font-weight:900;margin-right:8px">${nos[i]}</span>${t}`;b.onclick=()=>pick(i);box.appendChild(b);});
+}
+function pick(i){S.ans.push(i);S.i++;if(S.i>=QUESTIONS.length)finish();else renderQ();}
+function finish(){
+  const [a,b,c]=S.ans;
+  const idx=(a*17+b*7+c*3)%POWERS.length;
+  const power=POWERS[idx];
+  const grade=GRADES[idx%GRADES.length];
+  const holders=(200+idx*173)%3800+120;
+  const prob=(0.0003+((idx*7)%9)/10000).toFixed(4);
+  const quote=QUOTES[idx%QUOTES.length];
+  $("#r-power").textContent="「"+power+"」";
+  $("#r-quote").textContent='"'+quote+'"';
+  $("#r-grade").textContent=grade;$("#r-holders").textContent=holders.toLocaleString();$("#r-prob").textContent=prob+"%";
+  S.result={power,grade,holders,prob,quote};
+  updatePreview();
+  const st=$("#stamp");st.classList.remove("on");void st.offsetWidth;st.classList.add("on");
+  show("scr-result");
+}
+function cardResult(){
+  const r=S.result;
+  return {examName:"제 1회 무쓸모 초능력 검정",sheetTitle:"초 능 력 판 정 서",subline:`등급: ${r.grade}    보유자: 전국 ${r.holders.toLocaleString()}명`,
+    heroText:"「"+r.power+"」",title:"당신의 무쓸모 초능력",quote:r.quote,
+    rows:[["초능력 등급",r.grade],["동일 능력 보유자","전국 "+r.holders.toLocaleString()+"명"],["각성 확률",r.prob+"%"]],
+    footerUrl:PAGE_URL,fileName:"무쓸모초능력",stampBot:"인 증"};
+}
+function shareText(){const r=S.result;return `내 무쓸모 초능력: ${r.power}\n등급 ${r.grade} · 전국 ${r.holders.toLocaleString()}명 보유\n너도 각성해봐 🦸 ${PAGE_URL}`;}
+function updatePreview(){$("#share-preview").textContent=shareText();}
+
+$("#btn-start").onclick=begin;
+$("#btn-retry").onclick=begin;
+$("#btn-share").onclick=()=>share(shareText());
+$("#btn-card").onclick=()=>save(cardResult());
+show("scr-home");
+</script>
+</body>
+</html>
