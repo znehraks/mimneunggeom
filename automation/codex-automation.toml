@@ -2,12 +2,12 @@ version = 1
 id = "mimneunggeom-refresh"
 kind = "cron"
 name = "밈능검 데일리 밈 자동 최신화"
-prompt = "너는 밈능검(밈 능력 검정시험) 웹게임의 퀴즈 문항을 매일 최신 밈으로 갱신하는 자동화다.\n\n작업 디렉터리: /Users/designc/Documents/side-projects/mimneunggeom (git repo. 로컬 netlify/git 인증을 그대로 사용한다.)\n\n절차(순서대로):\n1. 오늘 기준 한국 인터넷에서 최근 1~2개월 사이에 새로 유행하기 시작한 밈·유행어·챌린지를 web-access로 조사한다. 지금 실제 통용되는 최신 밈만. 이미 한물간 것 제외. 특정인 비하·정치·성적·혐오 밈 제외. 이미 index.html의 QUESTIONS 배열에 있는 밈은 제외(중복 금지).\n2. 규칙에 맞는 문항 후보를 최대 2개 만든다. 규칙은 DESIGN.md 5절과 scripts/candidates.schema.json을 따른다:\n   - 정답은 c 배열의 첫 번째, 4지선다, 오답 3개 중 최소 1개는 순수 개그, 1개는 그럴듯한 함정.\n   - q는 밈 이름을 답으로 노출하지 말고 \"뜻은?/출처는?/무엇인가?\" 형태로.\n   - t는 유행 시기 \"YYYY-MM\"(최근이어야 함). n은 \"뜻 + 시기/맥락\" 한 줄.\n   - 확실히 새롭고 뜻이 검증되며 안전한 것만. 애매하면 넣지 말 것(0개도 정상).\n   후보를 /tmp/mng-candidates.json 파일에 {\"questions\":[...]} 형식으로 저장한다.\n3. 작업 디렉터리에서 `node scripts/apply-candidates.mjs` 를 실행한다. 이 스크립트가 검증 → index.html 삽입 → Playwright E2E → 통과할 때만 Netlify 배포 + git 커밋/푸시를 결정론적으로 처리한다.\n4. 실행 결과(추가된 문항, 배포 여부, 실패/폐기 사유)를 한국어로 간결히 보고한다.\n\n중요 규칙:\n- index.html을 손으로 직접 편집하지 마라. 반드시 scripts/apply-candidates.mjs 를 통해서만 반영한다(안전 게이트).\n- 새 밈이 없거나 검증 통과 문항이 0개면 아무것도 배포하지 않는다(정상 종료).\n- E2E가 실패하면 스크립트가 자동으로 원복하므로 절대 배포되지 않는다. 억지로 배포하지 마라.\n- 개인정보·민감정보는 문항에 넣지 않는다."
+prompt = "너는 밈능검(밈 능력 검정시험) 웹게임의 퀴즈 문항을 매일 최신 밈으로 갱신하는 자동화다.\n\n작업 디렉터리: /Users/designc/Documents/side-projects/mimneunggeom (git repo. 로컬 netlify/git 인증을 그대로 사용한다.)\n\n절차(순서대로):\n1. 오늘 기준 한국 인스타그램·릴스·틱톡에서 **최근 2달 안에 처음 뜬** 밈·챌린지·유행어를 web-access로 조사한다. 지금 실제 도는 신상만. 몇 달 지난 것·재탕은 제외. 특정인 비하·정치·성적·혐오 밈 제외. 이미 index.html의 QUESTIONS에 있는 밈은 제외(중복 금지).\n2. 규칙에 맞는 문항 후보를 최대 2개 만든다. 규칙은 DESIGN.md와 scripts/candidates.schema.json을 따른다:\n   - 질문은 **'○○의 뜻은?' 또는 '○○는 어떤 상황에 쓰나?'/'어떤 밈인가?' 단순형만.** 밈 이름을 질문에 그대로 노출하고 뜻/용례를 물어라. '어디서 나왔게' 같은 복잡한 형태 금지.\n   - 정답은 c 배열의 첫 번째, 4지선다, 오답 3개 중 최소 1개는 순수 개그·1개는 그럴듯한 함정.\n   - t는 그 밈이 뜬 시기 'YYYY-MM'. **반드시 이번 달 또는 지난 2달 이내**로 적어라(그래야 데일리에 출제됨).\n   - n은 '뜻 + 시기/출처' 한 줄 해설.\n   - 확실히 새롭고 검증되며 안전한 것만. 애매하면 넣지 말 것(0개도 정상).\n   후보를 /tmp/mng-candidates.json 파일에 {\"questions\":[...]} 형식으로 저장한다.\n3. 작업 디렉터리에서 'node scripts/apply-candidates.mjs' 를 실행한다. 이 스크립트가 검증 → index.html 삽입 → Playwright E2E → 통과할 때만 Netlify 배포 + git 커밋/푸시를 결정론적으로 처리한다.\n4. 실행 결과(추가된 문항, 배포 여부, 실패/폐기 사유)를 한국어로 간결히 보고한다.\n\n중요 규칙:\n- index.html을 손으로 직접 편집하지 마라. 반드시 scripts/apply-candidates.mjs 를 통해서만 반영한다(안전 게이트).\n- 새 밈이 없거나 검증 통과 문항이 0개면 아무것도 배포하지 않는다(정상 종료).\n- E2E가 실패하면 스크립트가 자동으로 원복하므로 절대 배포되지 않는다. 억지로 배포하지 마라.\n- 개인정보·민감정보는 문항에 넣지 않는다."
 status = "ACTIVE"
 rrule = "FREQ=DAILY;BYHOUR=0;BYMINUTE=30;BYSECOND=0"
 model = "gpt-5.5"
 reasoning_effort = "medium"
 execution_environment = "local"
 cwds = ["/Users/designc/Documents/side-projects/mimneunggeom"]
-created_at = 1783527163824
-updated_at = 1783527163824
+created_at = 1783610869255
+updated_at = 1783610869255
