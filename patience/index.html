@@ -153,17 +153,18 @@ const MP_VER="0.10.20";
 const MP_BUNDLE="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@"+MP_VER+"/vision_bundle.mjs";
 const MP_WASM="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@"+MP_VER+"/wasm";
 const LM_MODEL="https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-const DETECT_MS=80;        // 감지 주기 ≈12fps
+const DETECT_MS=40;        // 감지 주기 ≈25fps — 순간 깜빡임(눈 감김 30~80ms)도 프레임에 걸리게
 const READY_MS=800;        // 시작 전: 이만큼 연속 '정상 응시'여야 카운트다운
 const ALIGN_TIMEOUT=15000; // 정렬이 계속 실패하면 얼굴 게이트 끄고 진행(fail-open)
 const CD=3;
 // 판정 임계값 — 절대(_X/_UD: 정렬 단계·기준선 없을 때)와
 // 캘리브레이션 델타(_DX/_DUD/YAW_D: 측정 중 '본인 정면 기준선' 대비 편차, 훨씬 빡셈)
-const TH={BLINK:0.5,YAW_MIN:0.32,YAW_MAX:0.68,GAZE_X:0.13,GAZE_UD:0.7,
+const TH={BLINK_HARD:0.6,BLINK_SOFT:0.35,YAW_MIN:0.32,YAW_MAX:0.68,GAZE_X:0.13,GAZE_UD:0.7,
           YAW_D:0.1,GAZE_DX:0.08,GAZE_DUD:0.28};
-// 각 이탈 유형이 이만큼(ms) '연속' 지속돼야 탈락 — 프레임 노이즈 방어
-const HOLD={blink:140,gaze:200,head:250,noface:600};
-const CAUSE={blink:"눈을 깜빡임",gaze:"시선이 도망감",head:"고개를 돌림",noface:"얼굴이 사라짐"};
+// 각 이탈 유형이 이만큼(ms) '연속' 지속돼야 탈락 — 프레임 노이즈 방어.
+// 깜빡임은 '이벤트'라 확실한 감김(blink_hard)은 1프레임 즉시, 애매한 감김만 짧게 유예.
+const HOLD={blink_hard:0,blink:90,gaze:200,head:250,noface:600};
+const CAUSE={blink_hard:"눈을 깜빡임",blink:"눈을 깜빡임",gaze:"시선이 도망감",head:"고개를 돌림",noface:"얼굴이 사라짐"};
 
 // 프레임 1장 → 수치(순수 함수). lm=랜드마크 배열, bs=blendshape 맵
 // 랜드마크 인덱스: 1 코끝 / 234·454 좌·우 볼 / 33·133 한쪽 눈 양끝 / 362·263 반대쪽 눈 양끝 / 468·473 홍채 중심
@@ -181,7 +182,9 @@ function metricsOf(lm,bs){
 // 수치 → 판정. base가 있으면(측정 중) 본인 기준선 대비 델타로 빡세게, 없으면 절대 기준.
 function judgeM(m,base){
   if(!m)return "noface";
-  if(m.blink>TH.BLINK)return "blink";
+  const b0=base&&base.bl!=null?base.bl:0.1; // 평상시 눈 감김 정도(눈 가는 사람 보정)
+  if(m.blink>Math.max(TH.BLINK_HARD,b0+0.45))return "blink_hard"; // 확실한 감김 → 즉시
+  if(m.blink>Math.max(TH.BLINK_SOFT,b0+0.28))return "blink";      // 애매한 감김 → 짧은 유예
   if(base){
     if(Math.abs(m.yaw-base.yaw)>TH.YAW_D)return "head";
     if(Math.abs(m.gx-base.gx)>TH.GAZE_DX)return "gaze";
@@ -199,7 +202,8 @@ function baseFrom(samples){
   if(!samples||samples.length<5)return null;
   const med=k=>{const a=samples.map(s=>s[k]).sort((x,y)=>x-y);return a[a.length>>1];};
   const cl=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
-  return {gx:cl(med("gx"),-0.06,0.06),ud:cl(med("ud"),-0.35,0.35),yaw:cl(med("yaw"),0.42,0.58)};
+  return {gx:cl(med("gx"),-0.06,0.06),ud:cl(med("ud"),-0.35,0.35),yaw:cl(med("yaw"),0.42,0.58),
+          bl:cl(med("blink"),0,0.25)};
 }
 
 const S={phase:"idle",running:false,startTs:0,raf:0,tIv:0,
@@ -317,7 +321,7 @@ function renderAlign(now){
   if(!S.faceGate){ $("#hint").textContent="카메라 준비 완료"; startCount(now); return; }
   const seeing=S.why==="ok";
   $("#cam").classList.toggle("seen",seeing);
-  const M={noface:"🙂 얼굴이 안 보여요 — 정면으로",blink:"👁 눈을 크게 떠주세요",head:"↩️ 고개를 정면으로",gaze:"👀 화면 중앙을 봐주세요",boot:"…"};
+  const M={noface:"🙂 얼굴이 안 보여요 — 정면으로",blink:"👁 눈을 크게 떠주세요",blink_hard:"👁 눈을 크게 떠주세요",head:"↩️ 고개를 정면으로",gaze:"👀 화면 중앙을 봐주세요",boot:"…"};
   $("#cam-status").textContent=seeing?"👁 응시 인식됨":(M[S.why]||"…");
   $("#hint").textContent=seeing?"좋아요, 그대로!":"얼굴과 시선을 화면 정면에 맞춰주세요";
   if(S.okSince>0 && now-S.okSince>=READY_MS){ startCount(now); return; }
