@@ -58,16 +58,16 @@ jobs:
             echo "E2E 실패 → 변경 롤백, 배포 안 함"; git checkout -- index.html; exit 1
           fi
 
-      - name: Deploy to Netlify
+      - name: Deploy to Cloudflare Pages
         if: steps.refresh.outputs.changed == 'true'
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
-            echo "Netlify 시크릿 미설정 → 배포 스킵(문항 변경은 커밋만 됨)"; exit 0
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Cloudflare 시크릿 미설정 → 배포 스킵(문항 변경은 커밋만 됨)"; exit 0
           fi
-          npx netlify-cli@latest deploy --prod --dir . --site "$NETLIFY_SITE_ID" --message "daily meme refresh"
+          bash scripts/deploy-pages.sh
 
       - name: Commit refreshed questions
         if: steps.refresh.outputs.changed == 'true'

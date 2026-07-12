@@ -3,7 +3,7 @@
 > **당신의 밈 감각, 몇 급입니까?**
 > 매일 12문항 · 3분 완성 · 밈 연령 측정 · 전국 응시자 전원 동일 출제
 
-**Live: https://mimneunggeom.netlify.app**
+**Live: https://mimneunggeom.pages.dev**
 
 한능검(한국사능력검정시험)을 패러디한 데일리 밈 상식 아케이드.
 **전부 지금 실제로 도는 밈만** 출제한다 — 2024 국민밈(갓생·중꺾마·럭키비키) / 2025 유행(야르·샤갈·밤티·동결건조) / 2026 최신(윤정아 챌린지·난리자베스·젬민이·셋로그)이
@@ -57,9 +57,9 @@ steam/          # Steam 배포 준비 팩 (Electron 래퍼 + 절차)
 
 **매일 00:30 KST**에 최신 밈을 조사→검증→E2E 통과 시에만 자동 배포. 새 밈이 없는 날은 no-op. 두 경로 중 **하나만** 켜세요.
 
-**① Codex 로컬 (활성 · 시크릿 불필요)** — `~/.codex/automations/mimneunggeom-refresh/`에 등록됨. Codex가 `web-access`로 신상 밈 조사 → 후보 JSON → **`scripts/apply-candidates.mjs`**(검증·삽입·E2E·배포를 결정론적으로 처리, 실패 시 원복)를 실행. 로컬 netlify/git 인증을 그대로 써서 **API 키/시크릿이 필요 없습니다.** Codex 앱의 automations 목록에 "밈능검 데일리 밈 자동 최신화"로 나타납니다.
+**① Codex 로컬 (활성 · 시크릿 불필요)** — `~/.codex/automations/mimneunggeom-refresh/`에 등록됨. Codex가 `web-access`로 신상 밈 조사 → 후보 JSON → **`scripts/apply-candidates.mjs`**(검증·삽입·E2E·배포를 결정론적으로 처리, 실패 시 원복)를 실행. 로컬 wrangler(Cloudflare)/git 인증을 그대로 써서 **API 키/시크릿이 필요 없습니다.** Codex 앱의 automations 목록에 "밈능검 데일리 밈 자동 최신화"로 나타납니다.
 
-**② GitHub Actions (대안 · 클라우드)** — `.github/workflows/daily-meme-refresh.yml`. Claude API로 동일 흐름. 활성화하려면 레포 **Settings → Secrets → Actions**에 `ANTHROPIC_API_KEY`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID` 추가(미설정 시 no-op).
+**② GitHub Actions (대안 · 클라우드)** — `.github/workflows/daily-meme-refresh.yml`. Claude API로 동일 흐름. 활성화하려면 레포 **Settings → Secrets → Actions**에 `ANTHROPIC_API_KEY`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` 추가(미설정 시 no-op).
 
 상세: [DESIGN.md](DESIGN.md) §6.
 

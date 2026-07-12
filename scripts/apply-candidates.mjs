@@ -2,11 +2,11 @@
 /**
  * 후보 문항 JSON을 받아 결정론적으로 반영·배포하는 로컬 파이프라인.
  * Codex 자동화가 리서치로 만든 후보(JSON)를 여기에 넘겨 안전하게 반영한다.
- * (LLM/네트워크 리서치 없음 — 검증·삽입·E2E·배포만. netlify/git은 로컬 인증 사용.)
+ * (LLM/네트워크 리서치 없음 — 검증·삽입·E2E·배포만. wrangler(Cloudflare)/git은 로컬 인증 사용.)
  *
  * 입력: 후보 파일 경로(첫 인자) 또는 CANDIDATES_FILE 또는 /tmp/mng-candidates.json
  *   형식: {"questions":[{t,d,q,c,n}...]} 또는 [{...}]  (둘 다 허용)
- * 흐름: 검증 → index.html 삽입 → E2E 게이트(통과해야만) → netlify 배포 → git 커밋/푸시
+ * 흐름: 검증 → index.html 삽입 → E2E 게이트(통과해야만) → Cloudflare Pages 배포 → git 커밋/푸시
  *   실패/후보없음 → index.html 원복, no-op. APPLY_DRY_RUN=1이면 배포·커밋 생략(원복).
  */
 import fs from "fs";
@@ -78,9 +78,8 @@ async function runE2E() {
 
   if (DRY) { fs.writeFileSync(INDEX, original); log("DRY-RUN: 배포·커밋 생략, 원복 완료"); return; }
 
-  log("Netlify 배포…");
-  const SITE = process.env.NETLIFY_SITE_ID || "0ec9847a-6b75-451e-8691-eb62d6cf5270";
-  sh(`npx --yes netlify-cli deploy --prod --dir . --site ${SITE} --message "codex daily meme refresh"`);
+  log("Cloudflare Pages 배포…");
+  sh(`bash scripts/deploy-pages.sh`);
   log("git 커밋/푸시…");
   const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
   sh(`git add index.html`);

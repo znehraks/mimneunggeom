@@ -8,7 +8,7 @@
 카톡으로 퍼지는 게임이므로 트래픽의 대부분이 KR 모바일 → AdFit 적합.
 
 1. https://adfit.kakao.com 가입 (사업자 없이 개인도 가능, 카카오 계정)
-2. 매체 등록: `mimneunggeom.netlify.app` → 심사 수일
+2. 매체 등록: `mimneunggeom.pages.dev` → 심사 수일
 3. 광고단위 생성: 320×50(모바일 배너) 1개, 300×250(결과 화면) 1개
 4. `index.html`의 `CONFIG.ADS.enabled = true`로 변경 후 `#ad-slot` div에 발급 코드 삽입:
    ```html
