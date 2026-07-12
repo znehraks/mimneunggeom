@@ -53,7 +53,7 @@
     <div class="round-label">상대는 모니터. 눈을 떼는 순간 탈락</div>
     <div class="stat-row"><span class="chip">🏆 최고 기록 <b id="best-chip">0.0</b>초</span><span class="chip">👁 깜빡여도 탈락</span><span class="chip">🪤 어그로 주의</span></div>
     <button class="btn primary" id="btn-start">카메라 켜고 눈싸움 시작</button>
-    <p class="small" style="text-align:center;margin-top:12px">카메라가 <b>눈동자·눈꺼풀·고개 방향</b>을 실시간으로 지켜봅니다.<br>얼굴을 맞추면 <b>3·2·1</b> 뒤 시작 — <b>눈을 깜빡이거나 · 시선이 딴 데로 가거나 · 고개를 돌리거나 · 창을 벗어나거나 · 화면을 건드리는 순간 즉시 탈락</b>하고 성적표가 나옵니다.<br>버티는 동안 <b>온갖 어그로가 시선을 노립니다</b> — 낚이면 그대로 탈락.<br><span style="opacity:.8">📷 카메라 영상은 이 기기에서만 처리되고 어디에도 전송되지 않습니다.</span></p>
+    <p class="small" style="text-align:center;margin-top:12px">카메라가 <b>눈동자·눈꺼풀·고개 방향</b>을 실시간으로 지켜봅니다.<br>얼굴을 맞추면 <b>당신의 정면 시선을 기준으로 기록</b>하고 <b>3·2·1</b> 뒤 시작 — 이후 눈동자가 기준에서 <b>조금만 벗어나도</b>, 깜빡여도, 고개를 돌려도, 창을 벗어나도, 화면을 건드려도 <b>즉시 탈락</b>하고 성적표가 나옵니다.<br>버티는 동안 <b>온갖 어그로가 시선을 노립니다</b> — 낚이면 그대로 탈락.<br><span style="opacity:.8">📷 카메라 영상은 이 기기에서만 처리되고 어디에도 전송되지 않습니다.</span></p>
   </section>
 
   <section id="scr-game" class="screen">
@@ -157,33 +157,55 @@ const DETECT_MS=80;        // 감지 주기 ≈12fps
 const READY_MS=800;        // 시작 전: 이만큼 연속 '정상 응시'여야 카운트다운
 const ALIGN_TIMEOUT=15000; // 정렬이 계속 실패하면 얼굴 게이트 끄고 진행(fail-open)
 const CD=3;
-// 판정 임계값(관대한 쪽으로 설정, 실사용 피드백으로 튜닝)
-const TH={BLINK:0.5,YAW_MIN:0.32,YAW_MAX:0.68,GAZE_X:0.13,GAZE_UD:0.7};
+// 판정 임계값 — 절대(_X/_UD: 정렬 단계·기준선 없을 때)와
+// 캘리브레이션 델타(_DX/_DUD/YAW_D: 측정 중 '본인 정면 기준선' 대비 편차, 훨씬 빡셈)
+const TH={BLINK:0.5,YAW_MIN:0.32,YAW_MAX:0.68,GAZE_X:0.13,GAZE_UD:0.7,
+          YAW_D:0.1,GAZE_DX:0.08,GAZE_DUD:0.28};
 // 각 이탈 유형이 이만큼(ms) '연속' 지속돼야 탈락 — 프레임 노이즈 방어
-const HOLD={blink:140,gaze:300,head:300,noface:600};
+const HOLD={blink:140,gaze:200,head:250,noface:600};
 const CAUSE={blink:"눈을 깜빡임",gaze:"시선이 도망감",head:"고개를 돌림",noface:"얼굴이 사라짐"};
 
-// 프레임 1장 판정(순수 함수 — 테스트 대상). lm=랜드마크 배열, bs=blendshape 맵
+// 프레임 1장 → 수치(순수 함수). lm=랜드마크 배열, bs=blendshape 맵
 // 랜드마크 인덱스: 1 코끝 / 234·454 좌·우 볼 / 33·133 한쪽 눈 양끝 / 362·263 반대쪽 눈 양끝 / 468·473 홍채 중심
-function judgeFrame(lm,bs){
-  if(!lm||!lm.length)return "noface";
+function metricsOf(lm,bs){
+  if(!lm||!lm.length)return null;
   const blink=((bs.eyeBlinkLeft||0)+(bs.eyeBlinkRight||0))/2;
-  if(blink>TH.BLINK)return "blink";
   const yaw=(lm[1].x-lm[234].x)/((lm[454].x-lm[234].x)||1e-6); // 0.5=정면
-  if(yaw<TH.YAW_MIN||yaw>TH.YAW_MAX)return "head";
   const a=(lm[468].x-lm[33].x)/((lm[133].x-lm[33].x)||1e-6);   // 홍채가 눈 안에서 어디 있나(0.5=중앙)
   const b=(lm[473].x-lm[362].x)/((lm[263].x-lm[362].x)||1e-6);
   const gx=(a+b)/2-0.5;
-  const ud=Math.max(((bs.eyeLookDownLeft||0)+(bs.eyeLookDownRight||0))/2,
-                    ((bs.eyeLookUpLeft||0)+(bs.eyeLookUpRight||0))/2);
-  if(Math.abs(gx)>TH.GAZE_X||ud>TH.GAZE_UD)return "gaze";
+  const ud=((bs.eyeLookDownLeft||0)+(bs.eyeLookDownRight||0))/2
+          -((bs.eyeLookUpLeft||0)+(bs.eyeLookUpRight||0))/2;   // 아래=양수, 위=음수
+  return {blink,yaw,gx,ud};
+}
+// 수치 → 판정. base가 있으면(측정 중) 본인 기준선 대비 델타로 빡세게, 없으면 절대 기준.
+function judgeM(m,base){
+  if(!m)return "noface";
+  if(m.blink>TH.BLINK)return "blink";
+  if(base){
+    if(Math.abs(m.yaw-base.yaw)>TH.YAW_D)return "head";
+    if(Math.abs(m.gx-base.gx)>TH.GAZE_DX)return "gaze";
+    if(Math.abs(m.ud-base.ud)>TH.GAZE_DUD)return "gaze";
+  }else{
+    if(m.yaw<TH.YAW_MIN||m.yaw>TH.YAW_MAX)return "head";
+    if(Math.abs(m.gx)>TH.GAZE_X)return "gaze";
+    if(Math.abs(m.ud)>TH.GAZE_UD)return "gaze";
+  }
   return "ok";
+}
+function judgeFrame(lm,bs,base){return judgeM(metricsOf(lm,bs),base);}
+// 정렬~카운트다운 동안 모은 '정상 응시' 샘플의 중앙값 = 본인 기준선(과도한 값은 클램프)
+function baseFrom(samples){
+  if(!samples||samples.length<5)return null;
+  const med=k=>{const a=samples.map(s=>s[k]).sort((x,y)=>x-y);return a[a.length>>1];};
+  const cl=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+  return {gx:cl(med("gx"),-0.06,0.06),ud:cl(med("ud"),-0.35,0.35),yaw:cl(med("yaw"),0.42,0.58)};
 }
 
 const S={phase:"idle",running:false,startTs:0,raf:0,tIv:0,
   camOn:false,stream:null,mode:"",detReady:false,faceGate:false,gazeGate:false,
   lm:null,native:null,why:"boot",okSince:0,badWhy:"",badSince:0,
-  alignStart:0,cdStart:0,_lastDet:0,_detTs:0};
+  cal:[],base:null,m:null,alignStart:0,cdStart:0,_lastDet:0,_detTs:0};
 let best=load("best2",0); // 눈싸움 룰로 바뀌며 기록 초기화(구 키 best는 폐기)
 
 // 창 이탈/최소화는 rAF가 백그라운드에서 멈추므로 '이벤트'로 즉시 탈락 처리
@@ -201,7 +223,7 @@ function renderHome(){best=load("best2",0);$("#best-chip").textContent=best.toFi
 
 async function begin(){
   clearInterval(S.tIv);clearDistracts();
-  Object.assign(S,{phase:"align",running:true,startTs:0,why:"boot",okSince:0,badWhy:"",badSince:0,_detTs:0,nextDist:0});
+  Object.assign(S,{phase:"align",running:true,startTs:0,why:"boot",okSince:0,badWhy:"",badSince:0,_detTs:0,nextDist:0,cal:[],base:null,m:null});
   $("#elapsed").textContent="👁";$("#taunt").textContent="";
   $("#bait").style.display="none";$("#bait").classList.remove("roam");
   $("#hold").classList.remove("live");$("#cam").classList.remove("seen");
@@ -263,7 +285,11 @@ async function detectStep(now){
       const lm=r&&r.faceLandmarks&&r.faceLandmarks[0];
       const bs={};
       if(r&&r.faceBlendshapes&&r.faceBlendshapes[0])for(const c of r.faceBlendshapes[0].categories)bs[c.categoryName]=c.score;
-      why=judgeFrame(lm,bs);
+      const m=metricsOf(lm,bs);S.m=m;
+      // 측정 중엔 본인 기준선 대비 델타 판정(빡셈), 그 전엔 절대 기준(정렬용)
+      why=judgeM(m,S.phase==="timing"?S.base:null);
+      // 정렬~카운트다운의 '정상 응시' 프레임을 기준선 샘플로 수집
+      if(why==="ok"&&(S.phase==="align"||S.phase==="count")&&S.cal.length<80)S.cal.push(m);
     }else if(S.mode==="native"){
       const faces=await S.native.detect(v);
       why=(faces&&faces.length)?"ok":"noface";
@@ -301,11 +327,12 @@ function startCount(now){ if(S.phase!=="align")return; S.phase="count"; S.cdStar
 function renderCount(now){
   if(S.faceGate&&S.badWhy==="noface"&&now-S.badSince>1000){ S.phase="align"; S.alignStart=now; return; }
   const n=CD-Math.floor((now-S.cdStart)/1000);
-  if(n>0){ $("#elapsed").textContent=String(n); $("#hint").textContent="깜빡이거나 눈을 떼면 그 순간 탈락!"; if(S.camOn)$("#cam-status").textContent="👁 응시 인식됨"; }
+  if(n>0){ $("#elapsed").textContent=String(n); $("#hint").textContent="깜빡이거나 눈을 떼면 그 순간 탈락!"; if(S.camOn)$("#cam-status").textContent="👁 기준 시선 기록 중…"; }
   else startTiming(now);
 }
 function startTiming(now){
   S.phase="timing"; S.startTs=now; S.why=S.faceGate?"ok":S.why; S.okSince=now; S.badWhy=""; S.badSince=0;
+  S.base=S.gazeGate?baseFrom(S.cal):null; // 본인 정면 기준선 확정 → 이후 델타 판정
   S.nextDist=now+3500; // 첫 어그로 등장 시점
   $("#hold").classList.add("live"); $("#bait").style.display="";
   let ti=0; $("#taunt").textContent=TAUNTS[0];
@@ -364,7 +391,7 @@ $("#hold").addEventListener("pointerdown",e=>{
   const bait=e.target.closest("#bait");
   finish(d?d.dataset.cause:(bait?"'당첨' 버튼을 눌러버림":"화면 터치"));
 });
-if(new URLSearchParams(location.search).get("debug")==="1"){window.__pat=S;window.__judge=judgeFrame;window.__TH=TH;window.__spawnD=i=>spawnDistract(performance.now(),i);}
+if(new URLSearchParams(location.search).get("debug")==="1"){window.__pat=S;window.__judge=judgeFrame;window.__judgeM=judgeM;window.__baseFrom=baseFrom;window.__TH=TH;window.__spawnD=i=>spawnDistract(performance.now(),i);}
 renderHome();
 </script>
 </body>
