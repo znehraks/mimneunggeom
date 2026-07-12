@@ -39,11 +39,13 @@ async function cardOk(p) {
 // 2) 인내심
 {
   const { p, errs } = await newPage();
-  await p.goto(BASE + "/patience");
+  await p.goto(BASE + "/patience?debug=1");
   await p.click("#btn-start");
   await p.waitForSelector("#scr-game.active", { timeout: 8000 });
-  await p.waitForTimeout(1500);
-  await p.dispatchEvent("#hold", "pointerdown");
+  // 카메라 없음 → 정렬 건너뛰고 3·2·1 카운트다운 후 측정 시작(phase=timing)
+  await p.waitForFunction(() => window.__pat && window.__pat.phase === "timing", { timeout: 8000 });
+  await p.waitForTimeout(1300);
+  await p.dispatchEvent("#hold", "pointerdown"); // 화면 터치 → 종료
   await p.waitForSelector("#scr-result.active", { timeout: 8000 });
   ok(/^[1-6]$/.test((await p.textContent("#r-grade")).trim()), "patience: 급수 판정");
   ok(parseFloat(await p.textContent("#r-sec")) >= 1, "patience: 버틴 시간 " + (await p.textContent("#r-sec")));
